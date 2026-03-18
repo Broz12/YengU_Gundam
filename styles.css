@@ -1,6 +1,8 @@
 :root {
   --bg: #050b11;
   --bg-soft: #0b1620;
+  --surface: rgba(8, 16, 24, 0.88);
+  --surface-strong: rgba(8, 14, 21, 0.96);
   --panel: rgba(10, 21, 31, 0.82);
   --card: rgba(16, 29, 41, 0.94);
   --card-strong: rgba(20, 38, 55, 0.98);
@@ -15,6 +17,7 @@
   --warn: #ffd479;
   --error: #ff9585;
   --shadow: 0 30px 80px rgba(0, 0, 0, 0.34);
+  --shadow-soft: 0 18px 46px rgba(0, 0, 0, 0.22);
   --radius-xl: 30px;
   --radius-lg: 22px;
   --radius-md: 16px;
@@ -29,14 +32,17 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   background:
-    radial-gradient(circle at top left, rgba(255, 123, 84, 0.18), transparent 28%),
-    radial-gradient(circle at 85% 10%, rgba(105, 212, 255, 0.24), transparent 22%),
+    radial-gradient(circle at 10% 12%, rgba(255, 123, 84, 0.24), transparent 24%),
+    radial-gradient(circle at 88% 8%, rgba(105, 212, 255, 0.22), transparent 18%),
+    radial-gradient(circle at 50% 120%, rgba(105, 212, 255, 0.12), transparent 28%),
     linear-gradient(180deg, #071019 0%, #04080d 100%);
   color: var(--text);
   font-family: "Avenir Next", "Trebuchet MS", sans-serif;
@@ -51,6 +57,19 @@ body::before {
     linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.8), transparent 88%);
+  pointer-events: none;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  right: min(-6vw, -2rem);
+  bottom: min(-6vw, -2rem);
+  width: min(38vw, 420px);
+  aspect-ratio: 1;
+  background: url("./assets/yengu-mark.svg") center / contain no-repeat;
+  opacity: 0.07;
+  filter: saturate(1.3);
   pointer-events: none;
 }
 
@@ -85,8 +104,10 @@ code {
 
 .site-shell {
   position: relative;
+  z-index: 1;
   width: var(--content);
   margin: 0 auto;
+  padding-top: 0.75rem;
   padding-bottom: 4rem;
 }
 
@@ -119,15 +140,27 @@ code {
 }
 
 .hero {
+  position: relative;
   padding: 1rem 0 1.5rem;
 }
 
 .topbar {
+  position: sticky;
+  top: 0.8rem;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1rem 0 1.5rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 60%),
+    rgba(6, 14, 21, 0.78);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-soft);
 }
 
 .topbar-actions {
@@ -145,18 +178,38 @@ code {
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 3rem;
+  position: relative;
+  width: 3.35rem;
   aspect-ratio: 1;
-  border-radius: 14px;
+  padding: 0.3rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   background:
     linear-gradient(135deg, rgba(255, 123, 84, 0.85), rgba(105, 212, 255, 0.8));
-  color: #071019;
-  font-family: "Futura", "Avenir Next Condensed", "Arial Narrow", sans-serif;
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  box-shadow: 0 12px 40px rgba(105, 212, 255, 0.22);
+  box-shadow: 0 16px 40px rgba(105, 212, 255, 0.18);
+}
+
+.brand-mark::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 14px;
+  border: 1px solid rgba(6, 16, 25, 0.18);
+}
+
+.brand-mark-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.brand h1 {
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+  letter-spacing: 0.12em;
+}
+
+.eyebrow {
+  color: var(--accent);
 }
 
 .eyebrow,
@@ -185,6 +238,10 @@ code {
   text-transform: uppercase;
 }
 
+.eyebrow {
+  color: var(--accent);
+}
+
 .ghost-link,
 .secondary-button,
 .primary-button,
@@ -204,12 +261,16 @@ code {
 .action-button,
 .modal-close,
 .segmented-button {
+  position: relative;
   padding: 0.85rem 1.2rem;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.03);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
+    rgba(255, 255, 255, 0.02);
   color: var(--text);
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .ghost-link:hover,
@@ -233,18 +294,37 @@ code {
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
+  position: relative;
+  overflow: hidden;
   padding: 0.95rem 1.4rem;
   border-radius: 999px;
   border: 1px solid transparent;
-  background: linear-gradient(135deg, var(--accent), #9ff1ff);
+  background: linear-gradient(135deg, #73dfff, #d8fff7);
   color: #051018;
   font-weight: 800;
   cursor: pointer;
+  box-shadow:
+    0 16px 34px rgba(105, 212, 255, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.primary-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.45), transparent 80%);
+  opacity: 0;
+  transition: opacity 180ms ease;
 }
 
 .primary-button:hover,
 .primary-button:focus-visible {
   transform: translateY(-2px);
+}
+
+.primary-button:hover::after,
+.primary-button:focus-visible::after {
+  opacity: 1;
 }
 
 .hero-grid {
@@ -282,7 +362,35 @@ code {
 }
 
 .hero-copy {
+  position: relative;
+  overflow: hidden;
   padding: clamp(1.75rem, 4vw, 3rem);
+  background:
+    linear-gradient(155deg, rgba(11, 22, 32, 0.98), rgba(7, 15, 24, 0.88)),
+    var(--panel);
+}
+
+.hero-copy::before {
+  content: "";
+  position: absolute;
+  inset: auto -10% -15% 35%;
+  height: 220px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(105, 212, 255, 0.24), transparent 70%);
+  filter: blur(16px);
+  pointer-events: none;
+}
+
+.hero-copy::after {
+  content: "";
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 94px;
+  aspect-ratio: 1;
+  background: url("./assets/yengu-mark.svg") center / contain no-repeat;
+  opacity: 0.08;
+  pointer-events: none;
 }
 
 .hero-copy h2 {
@@ -293,6 +401,25 @@ code {
 
 .hero-copy h2 span {
   color: var(--accent);
+}
+
+.brand-ribbon {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.brand-ribbon span {
+  padding: 0.45rem 0.8rem;
+  border: 1px solid rgba(105, 212, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(105, 212, 255, 0.08);
+  color: #d7f9ff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .hero-text,
@@ -345,7 +472,18 @@ code {
 }
 
 .hero-stats article {
+  position: relative;
   padding: 1rem;
+  overflow: hidden;
+}
+
+.hero-stats article::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent 72%);
 }
 
 .hero-stats strong {
@@ -356,7 +494,24 @@ code {
 .hero-panel {
   position: relative;
   overflow: hidden;
+  display: grid;
+  gap: 1rem;
   padding: 1.4rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 24%),
+    rgba(8, 17, 26, 0.9);
+}
+
+.hero-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(5, 10, 16, 0.18), rgba(5, 10, 16, 0.5)),
+    url("./gundam2.avif") center / cover;
+  opacity: 0.1;
+  transform: scale(1.04);
+  pointer-events: none;
 }
 
 .hero-panel::after {
@@ -370,13 +525,96 @@ code {
   filter: blur(10px);
 }
 
+.hero-gallery {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.95fr);
+  grid-template-rows: repeat(3, minmax(88px, 1fr));
+  gap: 0.8rem;
+}
+
+.gallery-feature,
+.gallery-tile {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgba(244, 237, 223, 0.12);
+  background: #09111a;
+  box-shadow: var(--shadow-soft);
+}
+
+.gallery-feature {
+  grid-row: 1 / span 3;
+  min-height: 360px;
+}
+
+.gallery-feature img,
+.gallery-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition:
+    transform 260ms ease,
+    filter 260ms ease;
+}
+
+.gallery-feature::after,
+.gallery-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(4, 7, 11, 0) 30%, rgba(4, 7, 11, 0.62) 100%),
+    radial-gradient(circle at top right, rgba(105, 212, 255, 0.2), transparent 34%);
+  pointer-events: none;
+}
+
+.hero-panel:hover .gallery-feature img,
+.hero-panel:hover .gallery-tile img {
+  transform: scale(1.05);
+  filter: saturate(1.08);
+}
+
+.gallery-badge {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 2;
+  max-width: 220px;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(244, 237, 223, 0.16);
+  border-radius: 18px;
+  background: rgba(7, 14, 21, 0.76);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-soft);
+}
+
+.gallery-badge strong,
+.footer-brand strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.gallery-badge span {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .signal-card,
 .mini-card {
   position: relative;
 }
 
 .signal-card {
+  z-index: 1;
   padding: 1.25rem;
+  background:
+    linear-gradient(135deg, rgba(255, 123, 84, 0.08), transparent 60%),
+    rgba(255, 255, 255, 0.035);
 }
 
 .signal-card h3 {
@@ -387,12 +625,17 @@ code {
 
 .floating-cards {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
-  margin-top: 1rem;
 }
 
 .mini-card {
+  z-index: 1;
   padding: 1rem 1rem 1.1rem;
+}
+
+.mini-card:last-child {
+  grid-column: 1 / -1;
 }
 
 .mini-card strong {
@@ -573,7 +816,7 @@ code {
 .filter-pill {
   padding: 0.8rem 1rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text);
   cursor: pointer;
 }
@@ -597,7 +840,9 @@ code {
   padding: 0.95rem 1rem;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.02);
   color: var(--text);
 }
 
@@ -609,15 +854,43 @@ code {
 }
 
 .catalog-card {
+  position: relative;
   overflow: hidden;
+  border: 1px solid rgba(244, 237, 223, 0.1);
   border-radius: var(--radius-xl);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 18%),
+    rgba(9, 18, 27, 0.94);
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.catalog-card:hover,
+.catalog-card:focus-within {
+  transform: translateY(-6px);
+  border-color: rgba(105, 212, 255, 0.28);
+  box-shadow: 0 28px 62px rgba(0, 0, 0, 0.34);
 }
 
 .card-media {
   position: relative;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1 / 1.04;
   overflow: hidden;
   background: #09111a;
+}
+
+.card-media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(4, 7, 11, 0.12), transparent 28%, rgba(4, 7, 11, 0.7) 100%),
+    radial-gradient(circle at top right, rgba(105, 212, 255, 0.18), transparent 28%);
+  pointer-events: none;
 }
 
 .card-media img {
@@ -636,9 +909,42 @@ code {
 .card-tags {
   position: absolute;
   inset: 1rem 1rem auto;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+}
+
+.media-badges {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  align-items: end;
+}
+
+.media-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.48rem 0.72rem;
+  border-radius: 999px;
+  background: rgba(7, 14, 21, 0.78);
+  border: 1px solid rgba(244, 237, 223, 0.16);
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  backdrop-filter: blur(12px);
+}
+
+.media-badge-sale {
+  background: rgba(255, 123, 84, 0.16);
+  border-color: rgba(255, 123, 84, 0.26);
+  color: #ffd9cf;
 }
 
 .card-tag {
@@ -656,8 +962,20 @@ code {
 .card-body {
   display: grid;
   gap: 0.95rem;
+  position: relative;
   padding: 1.2rem;
-  background: var(--card-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 20%),
+    var(--card-strong);
+}
+
+.card-body::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 1.2rem;
+  width: 120px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent 80%);
 }
 
 .card-header {
@@ -690,6 +1008,7 @@ code {
   margin: 0;
   padding-left: 1rem;
   color: var(--muted);
+  line-height: 1.55;
 }
 
 .feature-list li + li {
@@ -712,6 +1031,16 @@ code {
 
 .price-row strong {
   font-size: 1.25rem;
+}
+
+.price-strike {
+  text-decoration: line-through;
+  color: var(--muted);
+  opacity: 0.9;
+}
+
+.price-discount {
+  color: var(--accent-warm);
 }
 
 .price-row span {
@@ -817,9 +1146,30 @@ code {
 
 .footer {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.2rem 0 0;
+  margin-top: 2rem;
+  padding: 1.3rem 1.4rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.footer-brand .section-kicker {
+  margin-bottom: 0.35rem;
+}
+
+.footer-mark {
+  width: 3rem;
+}
+
+.footer p {
+  margin: 0;
 }
 
 .noscript {
@@ -855,6 +1205,10 @@ code {
   .catalog {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .gallery-feature {
+    min-height: 300px;
+  }
 }
 
 @media (max-width: 820px) {
@@ -878,6 +1232,21 @@ code {
   .field-grid,
   .catalog {
     grid-template-columns: 1fr;
+  }
+
+  .hero-gallery,
+  .floating-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .gallery-feature {
+    grid-row: auto;
+    min-height: 260px;
+  }
+
+  .gallery-badge,
+  .mini-card:last-child {
+    grid-column: auto;
   }
 
   .modal-copy,

@@ -5,8 +5,69 @@ const exchange = {
 };
 
 const customizationFeeInr = 1000;
+const discountThresholdInr = 8000;
+const highDiscountRate = 0.15;
+const lowDiscountRate = 0.1;
 const defaultDeliveryLeadDays = 3;
-const publicConfig = window.YENGU_CONFIG || {};
+
+function pickConfigValue(...values) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+
+  return "";
+}
+
+function normalizePublicConfig() {
+  const rootConfig = {
+    ...(window.YENGU_CONFIG || {}),
+    ...(window.yenguConfig || {}),
+    ...(window.__YENGU_CONFIG__ || {}),
+  };
+
+  return {
+    supabaseUrl: pickConfigValue(
+      rootConfig.supabaseUrl,
+      rootConfig.supabaseURL,
+      rootConfig.SUPABASE_URL,
+      window.YENGU_SUPABASE_URL,
+      window.SUPABASE_URL,
+    ),
+    supabaseAnonKey: pickConfigValue(
+      rootConfig.supabaseAnonKey,
+      rootConfig.supabasePublishableKey,
+      rootConfig.supabaseKey,
+      rootConfig.supabaseAnonPublicKey,
+      rootConfig.SUPABASE_ANON_KEY,
+      rootConfig.SUPABASE_PUBLISHABLE_KEY,
+      rootConfig.SUPABASE_KEY,
+      window.YENGU_SUPABASE_ANON_KEY,
+      window.YENGU_SUPABASE_PUBLISHABLE_KEY,
+      window.SUPABASE_ANON_KEY,
+      window.SUPABASE_PUBLISHABLE_KEY,
+    ),
+    razorpayKeyId: pickConfigValue(
+      rootConfig.razorpayKeyId,
+      rootConfig.razorpayKey,
+      rootConfig.RAZORPAY_KEY_ID,
+      window.YENGU_RAZORPAY_KEY_ID,
+      window.RAZORPAY_KEY_ID,
+    ),
+    supportEmail: pickConfigValue(
+      rootConfig.supportEmail,
+      rootConfig.SUPPORT_EMAIL,
+      window.YENGU_SUPPORT_EMAIL,
+    ),
+    supportWhatsapp: pickConfigValue(
+      rootConfig.supportWhatsapp,
+      rootConfig.supportWhatsApp,
+      rootConfig.SUPPORT_WHATSAPP,
+      window.YENGU_SUPPORT_WHATSAPP,
+    ),
+  };
+}
+
+const publicConfig = normalizePublicConfig();
 
 const products = [
   {
@@ -217,7 +278,7 @@ const products = [
       "A top-end pick in the drop for buyers who want the flashiest visual impact.",
     ],
   },
-];
+].sort((left, right) => left.inrPrice - right.inrPrice || left.code.localeCompare(right.code));
 
 const filters = ["all", "custom", "wings", "premium", "led", "classic"];
 const productMap = new Map(products.map((product) => [product.code, product]));
@@ -242,6 +303,7 @@ const dom = {
   authStatusPill: document.querySelector("#auth-status-pill"),
   setupStatusPill: document.querySelector("#setup-status-pill"),
   setupBanner: document.querySelector("#setup-banner"),
+  setupBannerHeadline: document.querySelector("#setup-banner-headline"),
   setupBannerCopy: document.querySelector("#setup-banner-copy"),
   filters: document.querySelector("#filters"),
   catalog: document.querySelector("#catalog"),
@@ -287,6 +349,8 @@ const dom = {
   customizationNotesShell: document.querySelector("#customization-notes-shell"),
   syncProfileButton: document.querySelector("#sync-profile-button"),
   checkoutButton: document.querySelector("#checkout-button"),
+  summaryOriginalPrice: document.querySelector("#summary-original-price"),
+  summaryDiscountPrice: document.querySelector("#summary-discount-price"),
   summaryBasePrice: document.querySelector("#summary-base-price"),
   summaryCustomizationPrice: document.querySelector("#summary-customization-price"),
   summaryTotalPrice: document.querySelector("#summary-total-price"),
@@ -335,6 +399,51 @@ function toUsd(inrPrice) {
   return inrPrice / exchange.inrPerUsd;
 }
 
+function getDiscountRate(inrPrice) {
+  return inrPrice >= discountThresholdInr ? highDiscountRate : lowDiscountRate;
+}
+
+function getDiscountAmount(inrPrice) {
+  return Math.round(inrPrice * getDiscountRate(inrPrice));
+}
+
+function getDiscountLabel(rate) {
+  return `${Math.round(rate * 100)}% off`;
+}
+
+function getPriceBreakdown(product, customizationRequested = false) {
+  if (!product) {
+    const customizationCharge = customizationRequested ? customizationFeeInr : 0;
+
+    return {
+      originalBase: 0,
+      discountRate: 0,
+      discountLabel: "0% off",
+      discountAmount: 0,
+      discountedBase: 0,
+      customizationCharge,
+      finalTotal: customizationCharge,
+    };
+  }
+
+  const originalBase = product?.inrPrice || 0;
+  const discountRate = getDiscountRate(originalBase);
+  const discountAmount = getDiscountAmount(originalBase);
+  const discountedBase = originalBase - discountAmount;
+  const customizationCharge = customizationRequested ? customizationFeeInr : 0;
+  const finalTotal = discountedBase + customizationCharge;
+
+  return {
+    originalBase,
+    discountRate,
+    discountLabel: getDiscountLabel(discountRate),
+    discountAmount,
+    discountedBase,
+    customizationCharge,
+    finalTotal,
+  };
+}
+
 function formatDateForInput(daysAhead = defaultDeliveryLeadDays) {
   const date = new Date();
   date.setDate(date.getDate() + daysAhead);
@@ -346,16 +455,38 @@ function humanDate(value) {
   return dateFormatter.format(new Date(`${value}T00:00:00`));
 }
 
-function getSetupIssues() {
+function getSupabaseSetupIssues() {
   const issues = [];
 
   if (!window.supabase) issues.push("Supabase browser client did not load.");
-  if (!publicConfig.supabaseUrl) issues.push("Add your Supabase project URL in supabase-config.js.");
-  if (!publicConfig.supabaseAnonKey) issues.push("Add your Supabase anon key in supabase-config.js.");
+  if (!publicConfig.supabaseUrl) {
+    issues.push("Add Supabase URL as supabaseUrl or SUPABASE_URL in supabase-config.js.");
+  }
+  if (!publicConfig.supabaseAnonKey) {
+    issues.push(
+      "Add Supabase publishable key as supabaseAnonKey, supabasePublishableKey, supabaseKey, or SUPABASE_PUBLISHABLE_KEY in supabase-config.js.",
+    );
+  }
+
+  return issues;
+}
+
+function getCheckoutSetupIssues() {
+  const issues = [];
+
   if (!publicConfig.razorpayKeyId) issues.push("Add your Razorpay key id in supabase-config.js.");
   if (!window.Razorpay) issues.push("Razorpay checkout script did not load.");
 
   return issues;
+}
+
+function getSetupIssues() {
+  return [...getSupabaseSetupIssues(), ...getCheckoutSetupIssues()];
+}
+
+function getFeatureUnavailableNotice(featureLabel, issues) {
+  if (!issues.length) return `${featureLabel} is unavailable right now.`;
+  return `${featureLabel} is unavailable. ${issues[0]}`;
 }
 
 function setHidden(node, hidden) {
@@ -387,6 +518,10 @@ function normaliseError(error) {
 }
 
 function getInquiryText(product) {
+  const breakdown = getPriceBreakdown(
+    product,
+    product === state.orderProduct && dom.customizationCheckbox.checked,
+  );
   const customizationLine =
     product === state.orderProduct && dom.customizationCheckbox.checked
       ? `Customization selected: ${inrFormatter.format(customizationFeeInr)}`
@@ -394,7 +529,8 @@ function getInquiryText(product) {
 
   return [
     `Interested in ${product.title} (${product.code})`,
-    `Base price: ${inrFormatter.format(product.inrPrice)} | ${usdFormatter.format(toUsd(product.inrPrice))}`,
+    `Original price: ${inrFormatter.format(breakdown.originalBase)}`,
+    `Discounted price: ${inrFormatter.format(breakdown.discountedBase)} (${breakdown.discountLabel}) | ${usdFormatter.format(toUsd(breakdown.discountedBase))}`,
     customizationLine,
     "Please share payment and shipping steps.",
   ].join("\n");
@@ -426,10 +562,15 @@ function matchesFilter(product, filter) {
 function buildCard(product) {
   const article = document.createElement("article");
   article.className = "catalog-card reveal";
+  const breakdown = getPriceBreakdown(product);
 
   article.innerHTML = `
     <figure class="card-media">
       <img src="${product.image}" alt="${product.title}" loading="lazy" decoding="async" />
+      <div class="media-badges">
+        <span class="media-badge media-badge-sale">${breakdown.discountLabel}</span>
+        <span class="media-badge">1 of 1</span>
+      </div>
       <div class="card-tags">
         ${product.tags
           .slice(0, 3)
@@ -451,14 +592,22 @@ function buildCard(product) {
       </ul>
       <div class="price-panel">
         <div class="price-row">
-          <span>INR</span>
-          <strong>${inrFormatter.format(product.inrPrice)}</strong>
+          <span>Original</span>
+          <strong class="price-strike">${inrFormatter.format(breakdown.originalBase)}</strong>
         </div>
         <div class="price-row">
-          <span>USD</span>
-          <strong>${usdFormatter.format(toUsd(product.inrPrice))}</strong>
+          <span>Discount</span>
+          <strong class="price-discount">${breakdown.discountLabel}</strong>
         </div>
-        <p class="price-caption"><strong>Customization adds ${inrFormatter.format(customizationFeeInr)}.</strong> Login is required before checkout.</p>
+        <div class="price-row price-row-emphasis">
+          <span>Sale price</span>
+          <strong>${inrFormatter.format(breakdown.discountedBase)}</strong>
+        </div>
+        <div class="price-row">
+          <span>USD est.</span>
+          <strong>${usdFormatter.format(toUsd(breakdown.discountedBase))}</strong>
+        </div>
+        <p class="price-caption"><strong>${breakdown.discountLabel} applied automatically.</strong> Customization adds ${inrFormatter.format(customizationFeeInr)} after discount. Login is required before checkout.</p>
       </div>
       <div class="card-actions">
         <button class="action-button" data-action="details" type="button">View details</button>
@@ -529,8 +678,10 @@ function renderStats() {
 }
 
 function renderSetupState() {
-  const issues = getSetupIssues();
-  const configured = issues.length === 0;
+  const supabaseIssues = getSupabaseSetupIssues();
+  const checkoutIssues = getCheckoutSetupIssues();
+  const supabaseReady = supabaseIssues.length === 0;
+  const configured = supabaseReady && checkoutIssues.length === 0;
 
   setHidden(dom.setupBanner, configured);
 
@@ -545,12 +696,31 @@ function renderSetupState() {
     return;
   }
 
-  dom.commerceHeadline.textContent = "Config needed for live checkout";
+  if (supabaseReady) {
+    dom.commerceHeadline.textContent = "Supabase is connected";
+    dom.commerceCopy.textContent =
+      "Account login, saved profiles, support tickets, and order history are ready. Finish Razorpay to enable live checkout.";
+    dom.setupStatusPill.textContent = "Payments pending";
+    dom.setupStatusPill.className = "status-pill status-pill-soft";
+    dom.setupBannerHeadline.textContent = "Razorpay is the last step before live checkout.";
+    dom.setupBannerCopy.innerHTML = [
+      "<span>Supabase auth and data storage are already connected. Add the remaining Razorpay details below to enable payments.</span>",
+      ...checkoutIssues.map((issue) => `<span>${issue}</span>`),
+    ].join("<br />");
+    return;
+  }
+
+  dom.commerceHeadline.textContent = "Supabase config needed";
   dom.commerceCopy.textContent =
-    "The UI is ready, but live auth and payment stay disabled until Supabase and Razorpay are connected.";
-  dom.setupStatusPill.textContent = "Setup pending";
+    "Add the public Supabase values first to enable account login, saved profiles, support tickets, and order history.";
+  dom.setupStatusPill.textContent = "Supabase pending";
   dom.setupStatusPill.className = "status-pill status-pill-soft";
-  dom.setupBannerCopy.innerHTML = issues.map((issue) => `<span>${issue}</span>`).join("<br />");
+  dom.setupBannerHeadline.textContent = "Connect Supabase first, then finish Razorpay.";
+  dom.setupBannerCopy.innerHTML = [
+    "<span>Start by wiring Supabase. Checkout can be enabled after auth and data storage are working.</span>",
+    ...supabaseIssues.map((issue) => `<span>${issue}</span>`),
+    ...checkoutIssues.map((issue) => `<span>${issue}</span>`),
+  ].join("<br />");
 }
 
 function updateSupportChannels() {
@@ -713,6 +883,7 @@ function closeAuthDialog() {
 
 function openProductModal(product) {
   state.selectedProduct = product;
+  const breakdown = getPriceBreakdown(product);
   dom.modalImage.src = product.image;
   dom.modalImage.alt = product.title;
   dom.modalCode.textContent = product.code;
@@ -720,12 +891,22 @@ function openProductModal(product) {
   dom.modalSubtitle.textContent = product.subtitle;
   dom.modalPrice.innerHTML = `
     <div class="price-row">
-      <span>INR</span>
-      <strong>${inrFormatter.format(product.inrPrice)}</strong>
+      <span>Original</span>
+      <strong class="price-strike">${inrFormatter.format(breakdown.originalBase)}</strong>
+    </div>
+    <div class="price-row">
+      <span>Discount</span>
+      <strong class="price-discount">${breakdown.discountLabel} (${inrFormatter.format(
+        breakdown.discountAmount,
+      )})</strong>
+    </div>
+    <div class="price-row price-row-emphasis">
+      <span>Sale price</span>
+      <strong>${inrFormatter.format(breakdown.discountedBase)}</strong>
     </div>
     <div class="price-row">
       <span>USD</span>
-      <strong>${usdFormatter.format(toUsd(product.inrPrice))}</strong>
+      <strong>${usdFormatter.format(toUsd(breakdown.discountedBase))}</strong>
     </div>
     <div class="price-row">
       <span>Customization</span>
@@ -743,11 +924,12 @@ function closeProductModal() {
 
 function setOrderDialogProduct(product) {
   state.orderProduct = product;
+  const breakdown = getPriceBreakdown(product);
   dom.orderHeading.textContent = `Complete your ${product.title} order.`;
   dom.orderProductTitle.textContent = product.title;
-  dom.orderProductCopy.textContent = product.subtitle;
+  dom.orderProductCopy.textContent = `${product.subtitle} ${breakdown.discountLabel} is applied automatically before customization.`;
   dom.orderProductCode.textContent = product.code;
-  dom.orderBasePrice.textContent = inrFormatter.format(product.inrPrice);
+  dom.orderBasePrice.textContent = inrFormatter.format(breakdown.discountedBase);
   if (!document.querySelector("#order-delivery-date").value) {
     document.querySelector("#order-delivery-date").value = formatDateForInput();
   }
@@ -777,14 +959,14 @@ function closeOrderDialog() {
 }
 
 function updateOrderSummary() {
-  const base = state.orderProduct?.inrPrice || 0;
-  const customization = dom.customizationCheckbox.checked ? customizationFeeInr : 0;
-  const total = base + customization;
+  const breakdown = getPriceBreakdown(state.orderProduct, dom.customizationCheckbox.checked);
 
   setHidden(dom.customizationNotesShell, !dom.customizationCheckbox.checked);
-  dom.summaryBasePrice.textContent = inrFormatter.format(base);
-  dom.summaryCustomizationPrice.textContent = inrFormatter.format(customization);
-  dom.summaryTotalPrice.textContent = inrFormatter.format(total);
+  dom.summaryOriginalPrice.textContent = inrFormatter.format(breakdown.originalBase);
+  dom.summaryDiscountPrice.textContent = `-${inrFormatter.format(breakdown.discountAmount)} (${breakdown.discountLabel})`;
+  dom.summaryBasePrice.textContent = inrFormatter.format(breakdown.discountedBase);
+  dom.summaryCustomizationPrice.textContent = inrFormatter.format(breakdown.customizationCharge);
+  dom.summaryTotalPrice.textContent = inrFormatter.format(breakdown.finalTotal);
 }
 
 function getOrderPayload() {
@@ -913,6 +1095,7 @@ async function loadOrderHistory() {
             <span>Delivery: ${humanDate(order.delivery_date)}</span>
           </div>
           <div class="history-meta">
+            <span>Saved: ${inrFormatter.format(order.discount_amount_inr || 0)}</span>
             <span>Customization: ${order.customization_requested ? "Yes" : "No"}</span>
             <span>Placed: ${humanDate(order.created_at?.slice(0, 10))}</span>
           </div>
@@ -981,7 +1164,7 @@ async function handleAuthSubmit(event) {
   event.preventDefault();
 
   if (!supabaseClient) {
-    setNotice("Supabase is not configured yet. Add your public keys first.", "warn");
+    setNotice(getFeatureUnavailableNotice("Sign in", getSupabaseSetupIssues()), "warn");
     return;
   }
 
@@ -1043,7 +1226,13 @@ async function handleOrderSubmit(event) {
   }
 
   if (!supabaseClient || getSetupIssues().length) {
-    setNotice("Configure Supabase and Razorpay first to enable secure checkout.", "warn");
+    setNotice(
+      getFeatureUnavailableNotice("Checkout", [
+        ...getSupabaseSetupIssues(),
+        ...getCheckoutSetupIssues(),
+      ]),
+      "warn",
+    );
     return;
   }
 
@@ -1092,7 +1281,7 @@ async function handleSupportSubmit(event) {
   }
 
   if (!supabaseClient) {
-    setNotice("Supabase is not configured yet.", "warn");
+    setNotice(getFeatureUnavailableNotice("Support requests", getSupabaseSetupIssues()), "warn");
     return;
   }
 

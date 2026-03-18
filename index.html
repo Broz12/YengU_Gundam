@@ -17,7 +17,9 @@
       <header class="hero">
         <nav class="topbar">
           <div class="brand">
-            <span class="brand-mark">YE</span>
+            <span class="brand-mark">
+              <img src="./assets/yengu-mark.svg" alt="" class="brand-mark-image" />
+            </span>
             <div>
               <p class="eyebrow">Secure Collector Store</p>
               <h1>Yengu</h1>
@@ -33,6 +35,11 @@
 
         <div class="hero-grid">
           <section class="hero-copy reveal">
+            <div class="brand-ribbon">
+              <span>Hand-built showcase</span>
+              <span>Secure order flow</span>
+              <span>Premium custom drop</span>
+            </div>
             <p class="section-kicker">One-off customs. Secure ordering.</p>
             <h2>
               Clean checkout flow for premium Gundam orders,
@@ -67,6 +74,28 @@
           </section>
 
           <aside class="hero-panel reveal">
+            <div class="hero-gallery">
+              <figure class="gallery-feature">
+                <img src="./gundam2.avif" alt="Strike Freedom Gundam display build" />
+              </figure>
+              <figure class="gallery-tile">
+                <img src="./Gundam5.avif" alt="Wing Zero EW custom build" />
+              </figure>
+              <figure class="gallery-tile">
+                <img src="./gundam7.avif" alt="Unicorn Gundam blue luminous build" />
+              </figure>
+              <figure class="gallery-tile">
+                <img src="./Gundam13.avif" alt="Aqua lancer custom build" />
+              </figure>
+              <figure class="gallery-tile">
+                <img src="./gundam17.avif" alt="Azure Seraph custom build" />
+              </figure>
+              <div class="gallery-badge">
+                <strong>Yengu Curates</strong>
+                <span>1-of-1 display-ready builds</span>
+              </div>
+            </div>
+
             <div class="signal-card">
               <p class="panel-label">Commerce status</p>
               <h3 id="commerce-headline">Config needed for live checkout</h3>
@@ -107,10 +136,10 @@
         <section class="setup-banner reveal hidden" id="setup-banner">
           <div>
             <p class="section-kicker">Go live checklist</p>
-            <h2>Wire Supabase + Razorpay to turn the storefront fully live.</h2>
+            <h2 id="setup-banner-headline">Wire Supabase + Razorpay to turn the storefront fully live.</h2>
           </div>
           <p id="setup-banner-copy">
-            Add your public Supabase URL, anon key, and Razorpay key id inside
+            Add your public Supabase URL, publishable key, and Razorpay key id inside
             <code>supabase-config.js</code>. Keep order data in Supabase and
             keep payment secrets only in Edge Function environment variables.
           </p>
@@ -278,8 +307,19 @@
       </main>
 
       <footer class="footer">
-        <p>Yengu</p>
-        <p>Secure static storefront with Supabase-ready commerce flow and India-focused checkout.</p>
+        <div class="footer-brand">
+          <span class="brand-mark footer-mark">
+            <img src="./assets/yengu-mark.svg" alt="" class="brand-mark-image" />
+          </span>
+          <div>
+            <p class="section-kicker">Yengu Storefront</p>
+            <strong>Collector-first presentation with clean account-led ordering.</strong>
+          </div>
+        </div>
+        <p>
+          Secure static storefront with Supabase-ready commerce flow, structured support,
+          and India-focused checkout.
+        </p>
       </footer>
     </div>
 
@@ -449,7 +489,15 @@
 
           <div class="order-summary">
             <div class="price-row">
-              <span>Base price</span>
+              <span>Original price</span>
+              <strong id="summary-original-price">₹0</strong>
+            </div>
+            <div class="price-row">
+              <span>Discount</span>
+              <strong id="summary-discount-price">₹0</strong>
+            </div>
+            <div class="price-row">
+              <span>Sale price</span>
               <strong id="summary-base-price">₹0</strong>
             </div>
             <div class="price-row">

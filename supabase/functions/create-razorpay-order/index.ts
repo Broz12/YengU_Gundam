@@ -3,6 +3,9 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { productCatalog } from "../_shared/catalog.ts";
 
 const customizationFeeInr = 1000;
+const discountThresholdInr = 8000;
+const highDiscountRate = 0.15;
+const lowDiscountRate = 0.1;
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -18,6 +21,15 @@ function getEnv(name: string) {
   const value = Deno.env.get(name);
   if (!value) throw new Error(`Missing environment variable: ${name}`);
   return value;
+}
+
+function getFirstEnv(...names: string[]) {
+  for (const name of names) {
+    const value = Deno.env.get(name);
+    if (value) return value;
+  }
+
+  throw new Error(`Missing environment variable. Expected one of: ${names.join(", ")}`);
 }
 
 function validateText(value: unknown, label: string) {
@@ -40,6 +52,10 @@ function validateDeliveryDate(value: unknown) {
   return date;
 }
 
+function getDiscountRate(basePriceInr: number) {
+  return basePriceInr >= discountThresholdInr ? highDiscountRate : lowDiscountRate;
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -50,7 +66,7 @@ Deno.serve(async (request) => {
     if (!authHeader) return json({ error: "Missing authorization header." }, 401);
 
     const supabaseUrl = getEnv("SUPABASE_URL");
-    const supabaseAnonKey = getEnv("SUPABASE_ANON_KEY");
+    const supabaseAnonKey = getFirstEnv("SUPABASE_ANON_KEY", "SUPABASE_PUBLISHABLE_KEY");
     const supabaseServiceKey = getEnv("SUPABASE_SERVICE_ROLE_KEY");
     const razorpayKeyId = getEnv("RAZORPAY_KEY_ID");
     const razorpayKeySecret = getEnv("RAZORPAY_KEY_SECRET");
@@ -94,8 +110,11 @@ Deno.serve(async (request) => {
       shipping_pincode: validateText(body.pincode, "Pincode"),
     };
 
+    const discountRate = getDiscountRate(catalogItem.basePriceInr);
+    const discountAmountInr = Math.round(catalogItem.basePriceInr * discountRate);
+    const discountedBasePriceInr = catalogItem.basePriceInr - discountAmountInr;
     const customizationFee = customizationRequested ? customizationFeeInr : 0;
-    const totalPriceInr = catalogItem.basePriceInr + customizationFee;
+    const totalPriceInr = discountedBasePriceInr + customizationFee;
     const amountPaise = totalPriceInr * 100;
 
     const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {
@@ -129,6 +148,9 @@ Deno.serve(async (request) => {
         product_code: productCode,
         product_title: catalogItem.title,
         base_price_inr: catalogItem.basePriceInr,
+        discount_rate: discountRate,
+        discount_amount_inr: discountAmountInr,
+        discounted_base_price_inr: discountedBasePriceInr,
         customization_requested: customizationRequested,
         customization_fee_inr: customizationFee,
         customization_notes: customizationNotes || null,
@@ -151,6 +173,8 @@ Deno.serve(async (request) => {
       productTitle: orderRow.product_title,
       razorpayOrderId: razorpayOrder.id,
       amountPaise,
+      discountAmountInr,
+      discountedBasePriceInr,
       currency: "INR",
     });
   } catch (error) {

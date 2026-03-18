@@ -17,6 +17,15 @@ function getEnv(name: string) {
   return value;
 }
 
+function getFirstEnv(...names: string[]) {
+  for (const name of names) {
+    const value = Deno.env.get(name);
+    if (value) return value;
+  }
+
+  throw new Error(`Missing environment variable. Expected one of: ${names.join(", ")}`);
+}
+
 function requireText(value: unknown, label: string) {
   if (typeof value !== "string" || !value.trim()) {
     throw new Error(`${label} is required.`);
@@ -47,7 +56,7 @@ Deno.serve(async (request) => {
     if (!authHeader) return json({ error: "Missing authorization header." }, 401);
 
     const supabaseUrl = getEnv("SUPABASE_URL");
-    const supabaseAnonKey = getEnv("SUPABASE_ANON_KEY");
+    const supabaseAnonKey = getFirstEnv("SUPABASE_ANON_KEY", "SUPABASE_PUBLISHABLE_KEY");
     const supabaseServiceKey = getEnv("SUPABASE_SERVICE_ROLE_KEY");
     const razorpayKeyId = getEnv("RAZORPAY_KEY_ID");
     const razorpayKeySecret = getEnv("RAZORPAY_KEY_SECRET");

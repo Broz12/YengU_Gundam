@@ -1,0 +1,2 @@
+-- Seed placeholder for local Supabase CLI resets.
+-- Add shareable development fixtures here if you need them later.
