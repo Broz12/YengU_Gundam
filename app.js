@@ -4,6 +4,10 @@ const exchange = {
   sourcedDate: "March 12, 2026",
 };
 
+const customizationFeeInr = 1000;
+const defaultDeliveryLeadDays = 3;
+const publicConfig = window.YENGU_CONFIG || {};
+
 const products = [
   {
     code: "GH-01",
@@ -216,22 +220,77 @@ const products = [
 ];
 
 const filters = ["all", "custom", "wings", "premium", "led", "classic"];
+const productMap = new Map(products.map((product) => [product.code, product]));
 
-const catalogNode = document.querySelector("#catalog");
-const filtersNode = document.querySelector("#filters");
-const searchInput = document.querySelector("#search-input");
-const productModal = document.querySelector("#product-modal");
-const modalClose = document.querySelector("#modal-close");
-const modalImage = document.querySelector("#modal-image");
-const modalCode = document.querySelector("#modal-code");
-const modalTitle = document.querySelector("#modal-title");
-const modalSubtitle = document.querySelector("#modal-subtitle");
-const modalPrice = document.querySelector("#modal-price");
-const modalFeatures = document.querySelector("#modal-features");
-const modalCopyButton = document.querySelector("#modal-copy");
+const state = {
+  activeFilter: "all",
+  selectedProduct: null,
+  orderProduct: null,
+  session: null,
+  profile: null,
+  authMode: "signin",
+  pendingOrderProduct: null,
+  commerceReady: false,
+};
 
-let activeFilter = "all";
-let selectedProduct = null;
+const dom = {
+  appNotice: document.querySelector("#app-notice"),
+  statCount: document.querySelector("#stat-count"),
+  authStat: document.querySelector("#auth-stat"),
+  commerceHeadline: document.querySelector("#commerce-headline"),
+  commerceCopy: document.querySelector("#commerce-copy"),
+  authStatusPill: document.querySelector("#auth-status-pill"),
+  setupStatusPill: document.querySelector("#setup-status-pill"),
+  setupBanner: document.querySelector("#setup-banner"),
+  setupBannerCopy: document.querySelector("#setup-banner-copy"),
+  filters: document.querySelector("#filters"),
+  catalog: document.querySelector("#catalog"),
+  searchInput: document.querySelector("#search-input"),
+  accountShortcut: document.querySelector("#account-shortcut"),
+  openAuth: document.querySelector("#open-auth"),
+  signOutButton: document.querySelector("#sign-out-button"),
+  accountName: document.querySelector("#account-name"),
+  accountSummaryCopy: document.querySelector("#account-summary-copy"),
+  accountStatusPill: document.querySelector("#account-status-pill"),
+  profileForm: document.querySelector("#profile-form"),
+  saveProfileButton: document.querySelector("#save-profile-button"),
+  refreshOrders: document.querySelector("#refresh-orders"),
+  orderHistoryList: document.querySelector("#order-history-list"),
+  supportEmail: document.querySelector("#support-email"),
+  supportWhatsapp: document.querySelector("#support-whatsapp"),
+  supportForm: document.querySelector("#support-form"),
+  productModal: document.querySelector("#product-modal"),
+  modalClose: document.querySelector("#modal-close"),
+  modalImage: document.querySelector("#modal-image"),
+  modalCode: document.querySelector("#modal-code"),
+  modalTitle: document.querySelector("#modal-title"),
+  modalSubtitle: document.querySelector("#modal-subtitle"),
+  modalPrice: document.querySelector("#modal-price"),
+  modalFeatures: document.querySelector("#modal-features"),
+  modalOrder: document.querySelector("#modal-order"),
+  modalCopy: document.querySelector("#modal-copy"),
+  authDialog: document.querySelector("#auth-dialog"),
+  authClose: document.querySelector("#auth-close"),
+  authTabs: document.querySelector("#auth-tabs"),
+  authForm: document.querySelector("#auth-form"),
+  authSubmit: document.querySelector("#auth-submit"),
+  authHelper: document.querySelector("#auth-helper"),
+  orderDialog: document.querySelector("#order-dialog"),
+  orderClose: document.querySelector("#order-close"),
+  orderForm: document.querySelector("#order-form"),
+  orderHeading: document.querySelector("#order-heading"),
+  orderProductTitle: document.querySelector("#order-product-title"),
+  orderProductCopy: document.querySelector("#order-product-copy"),
+  orderProductCode: document.querySelector("#order-product-code"),
+  orderBasePrice: document.querySelector("#order-base-price"),
+  customizationCheckbox: document.querySelector("#order-customization"),
+  customizationNotesShell: document.querySelector("#customization-notes-shell"),
+  syncProfileButton: document.querySelector("#sync-profile-button"),
+  checkoutButton: document.querySelector("#checkout-button"),
+  summaryBasePrice: document.querySelector("#summary-base-price"),
+  summaryCustomizationPrice: document.querySelector("#summary-customization-price"),
+  summaryTotalPrice: document.querySelector("#summary-total-price"),
+};
 
 const inrFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -246,16 +305,98 @@ const usdFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
+const dateFormatter = new Intl.DateTimeFormat("en-IN", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
+
+const supabaseClient = createSupabaseClient();
+
+function createSupabaseClient() {
+  if (!window.supabase || !publicConfig.supabaseUrl || !publicConfig.supabaseAnonKey) {
+    return null;
+  }
+
+  state.commerceReady = true;
+  return window.supabase.createClient(
+    publicConfig.supabaseUrl,
+    publicConfig.supabaseAnonKey,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+    },
+  );
+}
+
 function toUsd(inrPrice) {
   return inrPrice / exchange.inrPerUsd;
 }
 
+function formatDateForInput(daysAhead = defaultDeliveryLeadDays) {
+  const date = new Date();
+  date.setDate(date.getDate() + daysAhead);
+  return date.toISOString().split("T")[0];
+}
+
+function humanDate(value) {
+  if (!value) return "Not scheduled";
+  return dateFormatter.format(new Date(`${value}T00:00:00`));
+}
+
+function getSetupIssues() {
+  const issues = [];
+
+  if (!window.supabase) issues.push("Supabase browser client did not load.");
+  if (!publicConfig.supabaseUrl) issues.push("Add your Supabase project URL in supabase-config.js.");
+  if (!publicConfig.supabaseAnonKey) issues.push("Add your Supabase anon key in supabase-config.js.");
+  if (!publicConfig.razorpayKeyId) issues.push("Add your Razorpay key id in supabase-config.js.");
+  if (!window.Razorpay) issues.push("Razorpay checkout script did not load.");
+
+  return issues;
+}
+
+function setHidden(node, hidden) {
+  if (!node) return;
+  node.classList.toggle("hidden", hidden);
+}
+
+function setNotice(message, tone = "info") {
+  if (!dom.appNotice) return;
+  dom.appNotice.textContent = message;
+  dom.appNotice.className = `app-notice ${tone}`;
+  window.clearTimeout(setNotice.timeoutId);
+  setNotice.timeoutId = window.setTimeout(() => {
+    dom.appNotice.className = "app-notice hidden";
+  }, 5200);
+}
+
+function setButtonBusy(button, busy, busyLabel) {
+  if (!button) return;
+  if (!button.dataset.originalLabel) button.dataset.originalLabel = button.textContent;
+  button.disabled = busy;
+  button.textContent = busy ? busyLabel : button.dataset.originalLabel;
+}
+
+function normaliseError(error) {
+  if (!error) return "Something went wrong.";
+  if (typeof error === "string") return error;
+  return error.message || "Something went wrong.";
+}
+
 function getInquiryText(product) {
+  const customizationLine =
+    product === state.orderProduct && dom.customizationCheckbox.checked
+      ? `Customization selected: ${inrFormatter.format(customizationFeeInr)}`
+      : "Customization selected: No";
+
   return [
     `Interested in ${product.title} (${product.code})`,
-    `Price: ${inrFormatter.format(product.inrPrice)} | ${usdFormatter.format(toUsd(product.inrPrice))}`,
-    "Availability: 1 piece",
-    "Please share shipping details and payment steps.",
+    `Base price: ${inrFormatter.format(product.inrPrice)} | ${usdFormatter.format(toUsd(product.inrPrice))}`,
+    customizationLine,
+    "Please share payment and shipping steps.",
   ].join("\n");
 }
 
@@ -263,6 +404,7 @@ async function copyInquiry(product) {
   const text = getInquiryText(product);
   try {
     await navigator.clipboard.writeText(text);
+    setNotice("Inquiry text copied.", "success");
   } catch (_error) {
     window.prompt("Copy the inquiry text below:", text);
   }
@@ -270,12 +412,7 @@ async function copyInquiry(product) {
 
 function matchesSearch(product, query) {
   if (!query) return true;
-  const haystack = [
-    product.title,
-    product.subtitle,
-    ...product.tags,
-    ...product.features,
-  ]
+  const haystack = [product.title, product.subtitle, ...product.tags, ...product.features]
     .join(" ")
     .toLowerCase();
   return haystack.includes(query.toLowerCase());
@@ -321,47 +458,48 @@ function buildCard(product) {
           <span>USD</span>
           <strong>${usdFormatter.format(toUsd(product.inrPrice))}</strong>
         </div>
-        <p class="price-caption"><strong>Only 1 piece available.</strong> Copy the inquiry to claim it fast.</p>
+        <p class="price-caption"><strong>Customization adds ${inrFormatter.format(customizationFeeInr)}.</strong> Login is required before checkout.</p>
       </div>
       <div class="card-actions">
-        <button class="action-button" data-action="details">View details</button>
-        <button class="action-button" data-action="copy">Copy inquiry</button>
+        <button class="action-button" data-action="details" type="button">View details</button>
+        <button class="primary-button" data-action="order" type="button">Order now</button>
       </div>
     </div>
   `;
 
-  const [detailsButton, copyButton] = article.querySelectorAll(".action-button");
+  const detailsButton = article.querySelector('[data-action="details"]');
+  const orderButton = article.querySelector('[data-action="order"]');
 
-  detailsButton.addEventListener("click", () => openModal(product));
-  copyButton.addEventListener("click", () => copyInquiry(product));
+  detailsButton.addEventListener("click", () => openProductModal(product));
+  orderButton.addEventListener("click", () => openOrderFlow(product));
 
   return article;
 }
 
 function renderFilters() {
-  filtersNode.innerHTML = "";
+  dom.filters.innerHTML = "";
 
   filters.forEach((filter) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `filter-pill${filter === activeFilter ? " is-active" : ""}`;
+    button.className = `filter-pill${filter === state.activeFilter ? " is-active" : ""}`;
     button.textContent = filter;
     button.addEventListener("click", () => {
-      activeFilter = filter;
+      state.activeFilter = filter;
       renderFilters();
       renderCatalog();
     });
-    filtersNode.appendChild(button);
+    dom.filters.appendChild(button);
   });
 }
 
 function renderCatalog() {
-  const query = searchInput.value.trim();
+  const query = dom.searchInput.value.trim();
   const visibleProducts = products.filter(
-    (product) => matchesFilter(product, activeFilter) && matchesSearch(product, query),
+    (product) => matchesFilter(product, state.activeFilter) && matchesSearch(product, query),
   );
 
-  catalogNode.innerHTML = "";
+  dom.catalog.innerHTML = "";
 
   if (!visibleProducts.length) {
     const emptyState = document.createElement("article");
@@ -373,27 +511,214 @@ function renderCatalog() {
         <p>Try a broader keyword like "custom", "wing", "unicorn", or switch the active filter.</p>
       </div>
     `;
-    catalogNode.appendChild(emptyState);
+    dom.catalog.appendChild(emptyState);
     return;
   }
 
   visibleProducts.forEach((product, index) => {
     const card = buildCard(product);
     card.style.transitionDelay = `${Math.min(index * 45, 240)}ms`;
-    catalogNode.appendChild(card);
+    dom.catalog.appendChild(card);
   });
 
   observeReveal();
 }
 
-function openModal(product) {
-  selectedProduct = product;
-  modalImage.src = product.image;
-  modalImage.alt = product.title;
-  modalCode.textContent = product.code;
-  modalTitle.textContent = product.title;
-  modalSubtitle.textContent = product.subtitle;
-  modalPrice.innerHTML = `
+function renderStats() {
+  dom.statCount.textContent = String(products.length);
+}
+
+function renderSetupState() {
+  const issues = getSetupIssues();
+  const configured = issues.length === 0;
+
+  setHidden(dom.setupBanner, configured);
+
+  if (configured) {
+    dom.commerceHeadline.textContent = "Secure commerce is configured";
+    dom.commerceCopy.textContent =
+      "Supabase auth, saved profiles, order history, and Razorpay checkout can now work together.";
+    dom.setupStatusPill.textContent = "Setup complete";
+    dom.setupStatusPill.className = "status-pill status-pill-success";
+    dom.setupBannerCopy.textContent =
+      "Supabase and Razorpay are connected. Keep your service role key and Razorpay secret only inside Edge Function environment variables.";
+    return;
+  }
+
+  dom.commerceHeadline.textContent = "Config needed for live checkout";
+  dom.commerceCopy.textContent =
+    "The UI is ready, but live auth and payment stay disabled until Supabase and Razorpay are connected.";
+  dom.setupStatusPill.textContent = "Setup pending";
+  dom.setupStatusPill.className = "status-pill status-pill-soft";
+  dom.setupBannerCopy.innerHTML = issues.map((issue) => `<span>${issue}</span>`).join("<br />");
+}
+
+function updateSupportChannels() {
+  dom.supportEmail.textContent = publicConfig.supportEmail
+    ? publicConfig.supportEmail
+    : "Add your support email in supabase-config.js.";
+  dom.supportWhatsapp.textContent = publicConfig.supportWhatsapp
+    ? publicConfig.supportWhatsapp
+    : "Add your WhatsApp number in supabase-config.js.";
+}
+
+function getProfileSeed() {
+  const user = state.session?.user;
+  const meta = user?.user_metadata || {};
+
+  return {
+    full_name: state.profile?.full_name || meta.full_name || "",
+    phone: state.profile?.phone || meta.phone || "",
+    email: state.profile?.email || user?.email || "",
+    line1: state.profile?.line1 || meta.line1 || "",
+    line2: state.profile?.line2 || meta.line2 || "",
+    city: state.profile?.city || meta.city || "",
+    state: state.profile?.state || meta.state || "",
+    pincode: state.profile?.pincode || meta.pincode || "",
+  };
+}
+
+function populateProfileForm() {
+  if (!state.session) return;
+  const seed = getProfileSeed();
+  document.querySelector("#profile-full-name").value = seed.full_name;
+  document.querySelector("#profile-phone").value = seed.phone;
+  document.querySelector("#profile-email").value = seed.email;
+  document.querySelector("#profile-line1").value = seed.line1;
+  document.querySelector("#profile-line2").value = seed.line2;
+  document.querySelector("#profile-city").value = seed.city;
+  document.querySelector("#profile-state").value = seed.state;
+  document.querySelector("#profile-pincode").value = seed.pincode;
+}
+
+function populateOrderFormFromProfile() {
+  const seed = getProfileSeed();
+  document.querySelector("#order-full-name").value = seed.full_name;
+  document.querySelector("#order-phone").value = seed.phone;
+  document.querySelector("#order-email").value = seed.email;
+  document.querySelector("#order-line1").value = seed.line1;
+  document.querySelector("#order-line2").value = seed.line2;
+  document.querySelector("#order-city").value = seed.city;
+  document.querySelector("#order-state").value = seed.state;
+  document.querySelector("#order-pincode").value = seed.pincode;
+}
+
+function renderAccountHub() {
+  if (!state.session) {
+    dom.authStat.textContent = "Guest mode";
+    dom.authStatusPill.textContent = "Guest";
+    dom.authStatusPill.className = "status-pill";
+    dom.accountStatusPill.textContent = "Not signed in";
+    dom.accountStatusPill.className = "status-pill";
+    dom.accountName.textContent = "Guest customer";
+    dom.accountSummaryCopy.textContent =
+      "Sign in to unlock checkout, order history, support tickets, and saved address details.";
+    setHidden(dom.profileForm, true);
+    setHidden(dom.signOutButton, true);
+    return;
+  }
+
+  const seed = getProfileSeed();
+  dom.authStat.textContent = seed.full_name || state.session.user.email || "Signed in";
+  dom.authStatusPill.textContent = "Signed in";
+  dom.authStatusPill.className = "status-pill status-pill-success";
+  dom.accountStatusPill.textContent = "Ready to order";
+  dom.accountStatusPill.className = "status-pill status-pill-success";
+  dom.accountName.textContent = seed.full_name || state.session.user.email;
+  dom.accountSummaryCopy.textContent =
+    "Your account details are saved and can prefill checkout, order history, and support requests.";
+  setHidden(dom.profileForm, false);
+  setHidden(dom.signOutButton, false);
+  populateProfileForm();
+}
+
+async function loadProfile() {
+  if (!supabaseClient || !state.session) {
+    state.profile = null;
+    renderAccountHub();
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .select("*")
+    .eq("id", state.session.user.id)
+    .maybeSingle();
+
+  if (error) {
+    setNotice(normaliseError(error), "warn");
+  }
+
+  state.profile = data || null;
+  renderAccountHub();
+  await loadOrderHistory();
+}
+
+async function upsertProfile(profilePayload) {
+  if (!supabaseClient || !state.session) return;
+
+  const payload = {
+    id: state.session.user.id,
+    email: state.session.user.email,
+    ...profilePayload,
+  };
+
+  const { data, error } = await supabaseClient
+    .from("profiles")
+    .upsert(payload, { onConflict: "id" })
+    .select()
+    .single();
+
+  if (error) throw error;
+  state.profile = data;
+  renderAccountHub();
+}
+
+function getProfileFormPayload() {
+  return {
+    full_name: document.querySelector("#profile-full-name").value.trim(),
+    phone: document.querySelector("#profile-phone").value.trim(),
+    line1: document.querySelector("#profile-line1").value.trim(),
+    line2: document.querySelector("#profile-line2").value.trim(),
+    city: document.querySelector("#profile-city").value.trim(),
+    state: document.querySelector("#profile-state").value.trim(),
+    pincode: document.querySelector("#profile-pincode").value.trim(),
+  };
+}
+
+function setAuthMode(mode) {
+  state.authMode = mode;
+  dom.authTabs.querySelectorAll(".segmented-button").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.mode === mode);
+  });
+
+  document.querySelectorAll(".auth-signup-only").forEach((node) => {
+    setHidden(node, mode !== "signup");
+  });
+
+  dom.authSubmit.textContent = mode === "signup" ? "Create account" : "Sign in";
+  dom.authHelper.textContent =
+    mode === "signup"
+      ? "Create a secure account with shipping details so checkout is faster."
+      : "Use your account to unlock checkout and order history.";
+}
+
+function openAuthDialog() {
+  dom.authDialog.showModal();
+}
+
+function closeAuthDialog() {
+  dom.authDialog.close();
+}
+
+function openProductModal(product) {
+  state.selectedProduct = product;
+  dom.modalImage.src = product.image;
+  dom.modalImage.alt = product.title;
+  dom.modalCode.textContent = product.code;
+  dom.modalTitle.textContent = product.title;
+  dom.modalSubtitle.textContent = product.subtitle;
+  dom.modalPrice.innerHTML = `
     <div class="price-row">
       <span>INR</span>
       <strong>${inrFormatter.format(product.inrPrice)}</strong>
@@ -402,14 +727,393 @@ function openModal(product) {
       <span>USD</span>
       <strong>${usdFormatter.format(toUsd(product.inrPrice))}</strong>
     </div>
+    <div class="price-row">
+      <span>Customization</span>
+      <strong>${inrFormatter.format(customizationFeeInr)}</strong>
+    </div>
   `;
-  modalFeatures.innerHTML = product.features.map((item) => `<li>${item}</li>`).join("");
-  productModal.showModal();
+  dom.modalFeatures.innerHTML = product.features.map((item) => `<li>${item}</li>`).join("");
+  dom.productModal.showModal();
 }
 
-function closeModal() {
-  productModal.close();
-  selectedProduct = null;
+function closeProductModal() {
+  dom.productModal.close();
+  state.selectedProduct = null;
+}
+
+function setOrderDialogProduct(product) {
+  state.orderProduct = product;
+  dom.orderHeading.textContent = `Complete your ${product.title} order.`;
+  dom.orderProductTitle.textContent = product.title;
+  dom.orderProductCopy.textContent = product.subtitle;
+  dom.orderProductCode.textContent = product.code;
+  dom.orderBasePrice.textContent = inrFormatter.format(product.inrPrice);
+  if (!document.querySelector("#order-delivery-date").value) {
+    document.querySelector("#order-delivery-date").value = formatDateForInput();
+  }
+  populateOrderFormFromProfile();
+  updateOrderSummary();
+}
+
+function openOrderFlow(product) {
+  if (!state.session) {
+    state.pendingOrderProduct = product;
+    setNotice("Please sign in or create an account before ordering.", "warn");
+    openAuthDialog();
+    return;
+  }
+
+  setOrderDialogProduct(product);
+  dom.orderDialog.showModal();
+}
+
+function closeOrderDialog() {
+  dom.orderDialog.close();
+  state.orderProduct = null;
+  dom.orderForm.reset();
+  document.querySelector("#order-delivery-date").value = formatDateForInput();
+  setHidden(dom.customizationNotesShell, true);
+  updateOrderSummary();
+}
+
+function updateOrderSummary() {
+  const base = state.orderProduct?.inrPrice || 0;
+  const customization = dom.customizationCheckbox.checked ? customizationFeeInr : 0;
+  const total = base + customization;
+
+  setHidden(dom.customizationNotesShell, !dom.customizationCheckbox.checked);
+  dom.summaryBasePrice.textContent = inrFormatter.format(base);
+  dom.summaryCustomizationPrice.textContent = inrFormatter.format(customization);
+  dom.summaryTotalPrice.textContent = inrFormatter.format(total);
+}
+
+function getOrderPayload() {
+  if (!state.orderProduct) throw new Error("Choose a product before checking out.");
+
+  return {
+    productCode: state.orderProduct.code,
+    productTitle: state.orderProduct.title,
+    deliveryDate: document.querySelector("#order-delivery-date").value,
+    fullName: document.querySelector("#order-full-name").value.trim(),
+    email: document.querySelector("#order-email").value.trim(),
+    phone: document.querySelector("#order-phone").value.trim(),
+    line1: document.querySelector("#order-line1").value.trim(),
+    line2: document.querySelector("#order-line2").value.trim(),
+    city: document.querySelector("#order-city").value.trim(),
+    state: document.querySelector("#order-state").value.trim(),
+    pincode: document.querySelector("#order-pincode").value.trim(),
+    notes: document.querySelector("#order-notes").value.trim(),
+    customizationRequested: dom.customizationCheckbox.checked,
+    customizationNotes: document.querySelector("#order-customization-notes").value.trim(),
+  };
+}
+
+function buildRazorpayOptions(orderResponse, payload) {
+  return {
+    key: publicConfig.razorpayKeyId,
+    amount: orderResponse.amountPaise,
+    currency: orderResponse.currency,
+    name: "Yengu",
+    description: payload.productTitle,
+    order_id: orderResponse.razorpayOrderId,
+    prefill: {
+      name: payload.fullName,
+      email: payload.email,
+      contact: payload.phone,
+    },
+    notes: {
+      product_code: payload.productCode,
+      delivery_date: payload.deliveryDate,
+      customization: payload.customizationRequested ? "yes" : "no",
+    },
+    theme: {
+      color: "#69d4ff",
+    },
+    handler: async (response) => {
+      try {
+        setButtonBusy(dom.checkoutButton, true, "Verifying payment...");
+        const { data, error } = await supabaseClient.functions.invoke("verify-razorpay-payment", {
+          body: {
+            checkoutOrderId: orderResponse.checkoutOrderId,
+            razorpayOrderId: response.razorpay_order_id,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: response.razorpay_signature,
+          },
+        });
+
+        if (error) throw error;
+
+        await loadOrderHistory();
+        closeOrderDialog();
+        setNotice(
+          `Payment confirmed for ${data.productTitle || payload.productTitle}. Order history has been updated.`,
+          "success",
+        );
+      } catch (error) {
+        setNotice(normaliseError(error), "error");
+      } finally {
+        setButtonBusy(dom.checkoutButton, false, "Proceed to secure checkout");
+      }
+    },
+    modal: {
+      ondismiss: () => {
+        setNotice("Checkout closed before payment confirmation.", "warn");
+      },
+    },
+  };
+}
+
+async function loadOrderHistory() {
+  if (!supabaseClient || !state.session) {
+    dom.orderHistoryList.innerHTML = `
+      <article class="empty-panel">
+        <strong>No orders yet</strong>
+        <p>Sign in and place an order to start building a secure order history timeline.</p>
+      </article>
+    `;
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(8);
+
+  if (error) {
+    setNotice(normaliseError(error), "warn");
+    return;
+  }
+
+  if (!data.length) {
+    dom.orderHistoryList.innerHTML = `
+      <article class="empty-panel">
+        <strong>No orders yet</strong>
+        <p>Your paid and pending orders will show up here after checkout starts.</p>
+      </article>
+    `;
+    return;
+  }
+
+  dom.orderHistoryList.innerHTML = data
+    .map(
+      (order) => `
+        <article class="history-item">
+          <div class="history-item-head">
+            <div>
+              <strong>${order.product_title}</strong>
+              <p>${order.product_code}</p>
+            </div>
+            <span class="status-pill ${
+              order.order_status === "paid" ? "status-pill-success" : "status-pill-soft"
+            }">${order.order_status.replaceAll("_", " ")}</span>
+          </div>
+          <div class="history-meta">
+            <span>Total: ${inrFormatter.format(order.total_price_inr)}</span>
+            <span>Delivery: ${humanDate(order.delivery_date)}</span>
+          </div>
+          <div class="history-meta">
+            <span>Customization: ${order.customization_requested ? "Yes" : "No"}</span>
+            <span>Placed: ${humanDate(order.created_at?.slice(0, 10))}</span>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+async function initAuth() {
+  if (!supabaseClient) {
+    renderAccountHub();
+    return;
+  }
+
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  state.session = session;
+  renderAccountHub();
+
+  if (session) {
+    await loadProfile();
+  }
+
+  supabaseClient.auth.onAuthStateChange(async (_event, sessionValue) => {
+    state.session = sessionValue;
+    renderAccountHub();
+
+    if (sessionValue) {
+      await loadProfile();
+      if (state.pendingOrderProduct) {
+        const pendingProduct = state.pendingOrderProduct;
+        state.pendingOrderProduct = null;
+        closeAuthDialog();
+        openOrderFlow(pendingProduct);
+      }
+    } else {
+      state.profile = null;
+      await loadOrderHistory();
+    }
+  });
+}
+
+async function handleProfileSubmit(event) {
+  event.preventDefault();
+
+  if (!state.session || !supabaseClient) {
+    setNotice("Sign in first to save account details.", "warn");
+    return;
+  }
+
+  try {
+    setButtonBusy(dom.saveProfileButton, true, "Saving...");
+    await upsertProfile(getProfileFormPayload());
+    setNotice("Account details saved.", "success");
+  } catch (error) {
+    setNotice(normaliseError(error), "error");
+  } finally {
+    setButtonBusy(dom.saveProfileButton, false, "Save account details");
+  }
+}
+
+async function handleAuthSubmit(event) {
+  event.preventDefault();
+
+  if (!supabaseClient) {
+    setNotice("Supabase is not configured yet. Add your public keys first.", "warn");
+    return;
+  }
+
+  const email = document.querySelector("#auth-email").value.trim();
+  const password = document.querySelector("#auth-password").value;
+
+  try {
+    setButtonBusy(dom.authSubmit, true, state.authMode === "signup" ? "Creating..." : "Signing in...");
+
+    if (state.authMode === "signin") {
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      closeAuthDialog();
+      setNotice("Signed in successfully.", "success");
+      return;
+    }
+
+    const metadata = {
+      full_name: document.querySelector("#auth-full-name").value.trim(),
+      phone: document.querySelector("#auth-phone").value.trim(),
+      line1: document.querySelector("#auth-line1").value.trim(),
+      line2: document.querySelector("#auth-line2").value.trim(),
+      city: document.querySelector("#auth-city").value.trim(),
+      state: document.querySelector("#auth-state").value.trim(),
+      pincode: document.querySelector("#auth-pincode").value.trim(),
+    };
+
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: {
+        data: metadata,
+      },
+    });
+
+    if (error) throw error;
+
+    if (data.session) {
+      closeAuthDialog();
+      setNotice("Account created and signed in.", "success");
+      return;
+    }
+
+    setNotice("Account created. Check your email for the confirmation link, then sign in.", "success");
+  } catch (error) {
+    setNotice(normaliseError(error), "error");
+  } finally {
+    setButtonBusy(dom.authSubmit, false, state.authMode === "signup" ? "Create account" : "Sign in");
+  }
+}
+
+async function handleOrderSubmit(event) {
+  event.preventDefault();
+
+  if (!state.session) {
+    openAuthDialog();
+    setNotice("Please sign in before ordering.", "warn");
+    return;
+  }
+
+  if (!supabaseClient || getSetupIssues().length) {
+    setNotice("Configure Supabase and Razorpay first to enable secure checkout.", "warn");
+    return;
+  }
+
+  if (!window.Razorpay) {
+    setNotice("Razorpay checkout failed to load.", "error");
+    return;
+  }
+
+  try {
+    const payload = getOrderPayload();
+
+    await upsertProfile({
+      full_name: payload.fullName,
+      phone: payload.phone,
+      line1: payload.line1,
+      line2: payload.line2,
+      city: payload.city,
+      state: payload.state,
+      pincode: payload.pincode,
+    });
+
+    setButtonBusy(dom.checkoutButton, true, "Creating order...");
+
+    const { data, error } = await supabaseClient.functions.invoke("create-razorpay-order", {
+      body: payload,
+    });
+
+    if (error) throw error;
+
+    const razorpay = new window.Razorpay(buildRazorpayOptions(data, payload));
+    razorpay.open();
+  } catch (error) {
+    setNotice(normaliseError(error), "error");
+  } finally {
+    setButtonBusy(dom.checkoutButton, false, "Proceed to secure checkout");
+  }
+}
+
+async function handleSupportSubmit(event) {
+  event.preventDefault();
+
+  if (!state.session) {
+    openAuthDialog();
+    setNotice("Sign in before sending a support request.", "warn");
+    return;
+  }
+
+  if (!supabaseClient) {
+    setNotice("Supabase is not configured yet.", "warn");
+    return;
+  }
+
+  try {
+    const payload = {
+      user_id: state.session.user.id,
+      email: state.session.user.email,
+      subject: document.querySelector("#support-subject").value.trim(),
+      order_reference: document.querySelector("#support-order-reference").value.trim(),
+      message: document.querySelector("#support-message").value.trim(),
+    };
+
+    const { error } = await supabaseClient.from("support_requests").insert(payload);
+
+    if (error) throw error;
+
+    dom.supportForm.reset();
+    setNotice("Support request sent.", "success");
+  } catch (error) {
+    setNotice(normaliseError(error), "error");
+  }
 }
 
 function observeReveal() {
@@ -431,37 +1135,81 @@ function observeReveal() {
   });
 }
 
-function renderStats() {
-  document.querySelector("#stat-count").textContent = String(products.length);
-  document.querySelector("#stat-range").textContent = `${inrFormatter.format(
-    Math.min(...products.map((product) => product.inrPrice)),
-  )} to ${inrFormatter.format(Math.max(...products.map((product) => product.inrPrice)))}`;
-
-  const rateLine = `1 USD approx. ${inrFormatter.format(exchange.inrPerUsd)} from ${exchange.source} (${exchange.sourcedDate})`;
-  document.querySelector("#exchange-rate-copy").textContent = rateLine;
-  document.querySelector(
-    "#exchange-footnote",
-  ).textContent = `USD values are estimated from a recent ${exchange.source} mid-market INR to USD reference surfaced for ${exchange.sourcedDate}. The site keeps your pasted INR prices as the source of truth and calculates USD with 2-decimal formatting for readability.`;
+function bindDialogBackdropClose(dialog, closeHandler) {
+  dialog.addEventListener("click", (event) => {
+    const bounds = dialog.getBoundingClientRect();
+    const outside =
+      event.clientX < bounds.left ||
+      event.clientX > bounds.right ||
+      event.clientY < bounds.top ||
+      event.clientY > bounds.bottom;
+    if (outside) closeHandler();
+  });
 }
 
-searchInput.addEventListener("input", renderCatalog);
-modalClose.addEventListener("click", closeModal);
-productModal.addEventListener("click", (event) => {
-  const bounds = productModal.getBoundingClientRect();
-  const clickedOutside =
-    event.clientX < bounds.left ||
-    event.clientX > bounds.right ||
-    event.clientY < bounds.top ||
-    event.clientY > bounds.bottom;
+function bindEvents() {
+  dom.searchInput.addEventListener("input", renderCatalog);
+  dom.accountShortcut.addEventListener("click", () => {
+    document.querySelector("#account-hub").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  dom.openAuth.addEventListener("click", openAuthDialog);
+  dom.signOutButton.addEventListener("click", async () => {
+    if (!supabaseClient) return;
+    await supabaseClient.auth.signOut();
+    setNotice("Signed out.", "success");
+  });
+  dom.profileForm.addEventListener("submit", handleProfileSubmit);
+  dom.refreshOrders.addEventListener("click", loadOrderHistory);
+  dom.supportForm.addEventListener("submit", handleSupportSubmit);
 
-  if (clickedOutside) closeModal();
-});
+  dom.modalClose.addEventListener("click", closeProductModal);
+  dom.modalOrder.addEventListener("click", () => {
+    if (state.selectedProduct) {
+      closeProductModal();
+      openOrderFlow(state.selectedProduct);
+    }
+  });
+  dom.modalCopy.addEventListener("click", () => {
+    if (state.selectedProduct) copyInquiry(state.selectedProduct);
+  });
 
-modalCopyButton.addEventListener("click", () => {
-  if (selectedProduct) copyInquiry(selectedProduct);
-});
+  dom.authClose.addEventListener("click", closeAuthDialog);
+  dom.authTabs.querySelectorAll(".segmented-button").forEach((button) => {
+    button.addEventListener("click", () => setAuthMode(button.dataset.mode));
+  });
+  dom.authForm.addEventListener("submit", handleAuthSubmit);
 
-renderStats();
-renderFilters();
-renderCatalog();
-observeReveal();
+  dom.orderClose.addEventListener("click", closeOrderDialog);
+  dom.orderForm.addEventListener("submit", handleOrderSubmit);
+  dom.customizationCheckbox.addEventListener("change", updateOrderSummary);
+  dom.syncProfileButton.addEventListener("click", () => {
+    populateOrderFormFromProfile();
+    updateOrderSummary();
+    setNotice("Saved account details loaded into the order form.", "success");
+  });
+
+  bindDialogBackdropClose(dom.productModal, closeProductModal);
+  bindDialogBackdropClose(dom.authDialog, closeAuthDialog);
+  bindDialogBackdropClose(dom.orderDialog, closeOrderDialog);
+}
+
+function setOrderDefaults() {
+  document.querySelector("#order-delivery-date").min = formatDateForInput(1);
+  document.querySelector("#order-delivery-date").value = formatDateForInput();
+}
+
+function init() {
+  renderStats();
+  renderFilters();
+  renderCatalog();
+  renderSetupState();
+  updateSupportChannels();
+  setAuthMode("signin");
+  setOrderDefaults();
+  updateOrderSummary();
+  bindEvents();
+  observeReveal();
+  initAuth();
+}
+
+init();

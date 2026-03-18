@@ -22,3 +22,6 @@ contact-sheet.png
 contact-sheet-time.png
 inspect/
 thumbs/
+.env
+.env.*
+supabase/.temp/

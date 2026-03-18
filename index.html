@@ -5,84 +5,98 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Collector-grade Gundam showcase with local image-backed product cards, INR pricing, and filled USD estimates."
+      content="Yengu Gundam storefront with secure account login, customizable orders, delivery scheduling, and India-ready checkout."
     />
-    <title>Yengu | Collector Drop</title>
+    <title>Yengu | Secure Collector Checkout</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <div class="site-shell">
+      <div class="app-notice hidden" id="app-notice" role="alert"></div>
+
       <header class="hero">
         <nav class="topbar">
           <div class="brand">
             <span class="brand-mark">YE</span>
             <div>
-              <p class="eyebrow">Launch-Ready Storefront</p>
+              <p class="eyebrow">Secure Collector Store</p>
               <h1>Yengu</h1>
             </div>
           </div>
-          <a class="ghost-link" href="#collection">Explore the collection</a>
+
+          <div class="topbar-actions">
+            <a class="ghost-link" href="#collection">Collection</a>
+            <a class="ghost-link" href="#support">Customer service</a>
+            <button class="ghost-link" id="account-shortcut" type="button">Account</button>
+          </div>
         </nav>
 
         <div class="hero-grid">
           <section class="hero-copy reveal">
-            <p class="section-kicker">One-off customs. Display-ready builds.</p>
+            <p class="section-kicker">One-off customs. Secure ordering.</p>
             <h2>
-              A bold catalog for your Gundam figures, priced in
-              <span>INR + USD</span>.
+              Clean checkout flow for premium Gundam orders,
+              <span>built for India-first payments.</span>
             </h2>
             <p class="hero-text">
-              Every card below is generated from the local Gundam image set in
-              this folder. The site keeps your INR pricing and fills the USD
-              value automatically using a recent INR to USD reference rate.
+              Buyers can browse, create an account, save their address, choose
+              a delivery date, request customization, and pay securely. Orders,
+              account details, and support history are designed to live in
+              Supabase rather than in the repo.
             </p>
 
             <div class="hero-actions">
               <a class="primary-button" href="#collection">Browse figures</a>
-              <a class="secondary-button" href="#contact">Claim instructions</a>
+              <a class="secondary-button" href="#account-hub">Open account hub</a>
             </div>
 
             <div class="hero-stats">
               <article>
                 <strong id="stat-count">16</strong>
-                <span>unique builds</span>
+                <span>collector builds</span>
               </article>
               <article>
-                <strong>1 of 1</strong>
-                <span>stock per figure</span>
+                <strong>+₹1,000</strong>
+                <span>customization surcharge</span>
               </article>
               <article>
-                <strong id="stat-range">INR + USD</strong>
-                <span>dual-currency display</span>
+                <strong id="auth-stat">Guest mode</strong>
+                <span>login required to order</span>
               </article>
             </div>
           </section>
 
           <aside class="hero-panel reveal">
             <div class="signal-card">
-              <p class="panel-label">USD Fill Status</p>
-              <h3>Completed for all 16 products</h3>
-              <p>
-                USD estimates use a recent Wise mid-market INR to USD reference:
-                <strong id="exchange-rate-copy"></strong>
+              <p class="panel-label">Commerce status</p>
+              <h3 id="commerce-headline">Config needed for live checkout</h3>
+              <p id="commerce-copy">
+                Connect Supabase and Razorpay keys to unlock account login,
+                secure order capture, and payment verification.
               </p>
+              <div class="status-row">
+                <span class="status-pill" id="auth-status-pill">Guest</span>
+                <span class="status-pill status-pill-soft" id="setup-status-pill">
+                  Setup pending
+                </span>
+              </div>
             </div>
 
             <div class="floating-cards">
               <article class="mini-card">
-                <span class="mini-tag">LED Build</span>
-                <strong>00 Raiser Custom</strong>
-                <p>Metallic blue finish with a ring base and chest glow.</p>
+                <span class="mini-tag">Auth + Profiles</span>
+                <strong>Account-gated checkout</strong>
+                <p>Email/password login with saved shipping details and profile edits.</p>
               </article>
               <article class="mini-card">
-                <span class="mini-tag">Wing Heavy</span>
-                <strong>Strike Freedom</strong>
-                <p>Large silhouette with dramatic translucent wing effects.</p>
+                <span class="mini-tag">Orders + History</span>
+                <strong>Delivery date and customization</strong>
+                <p>Every order stores delivery date, customization notes, and payment state.</p>
               </article>
               <article class="mini-card">
-                <span class="mini-tag">Collector Shelf</span>
-                <strong>Built to display</strong>
-                <p>Single-piece availability across the entire drop.</p>
+                <span class="mini-tag">India Payments</span>
+                <strong>Razorpay-ready flow</strong>
+                <p>Built for UPI, cards, netbanking, and Razorpay order verification.</p>
               </article>
             </div>
           </aside>
@@ -90,10 +104,110 @@
       </header>
 
       <main>
+        <section class="setup-banner reveal hidden" id="setup-banner">
+          <div>
+            <p class="section-kicker">Go live checklist</p>
+            <h2>Wire Supabase + Razorpay to turn the storefront fully live.</h2>
+          </div>
+          <p id="setup-banner-copy">
+            Add your public Supabase URL, anon key, and Razorpay key id inside
+            <code>supabase-config.js</code>. Keep order data in Supabase and
+            keep payment secrets only in Edge Function environment variables.
+          </p>
+        </section>
+
+        <section class="commerce-grid reveal" id="account-hub">
+          <article class="account-card">
+            <div class="card-shell">
+              <div class="section-head">
+                <div>
+                  <p class="section-kicker">Account hub</p>
+                  <h2>Login is required before ordering.</h2>
+                </div>
+                <button class="secondary-button" id="open-auth" type="button">
+                  Sign in / Create account
+                </button>
+              </div>
+
+              <div class="account-summary" id="account-summary">
+                <div>
+                  <strong class="summary-title" id="account-name">Guest customer</strong>
+                  <p id="account-summary-copy">
+                    Sign in to unlock checkout, order history, support tickets, and saved address details.
+                  </p>
+                </div>
+                <div class="status-row">
+                  <span class="status-pill" id="account-status-pill">Not signed in</span>
+                  <button class="ghost-link hidden" id="sign-out-button" type="button">Sign out</button>
+                </div>
+              </div>
+
+              <form class="stack-form hidden" id="profile-form">
+                <div class="field-grid">
+                  <label class="field">
+                    <span>Full name</span>
+                    <input id="profile-full-name" name="full_name" type="text" required />
+                  </label>
+                  <label class="field">
+                    <span>Phone</span>
+                    <input id="profile-phone" name="phone" type="tel" inputmode="tel" required />
+                  </label>
+                  <label class="field field-wide">
+                    <span>Email</span>
+                    <input id="profile-email" name="email" type="email" readonly />
+                  </label>
+                  <label class="field field-wide">
+                    <span>Address line 1</span>
+                    <input id="profile-line1" name="line1" type="text" required />
+                  </label>
+                  <label class="field field-wide">
+                    <span>Address line 2</span>
+                    <input id="profile-line2" name="line2" type="text" />
+                  </label>
+                  <label class="field">
+                    <span>City</span>
+                    <input id="profile-city" name="city" type="text" required />
+                  </label>
+                  <label class="field">
+                    <span>State</span>
+                    <input id="profile-state" name="state" type="text" required />
+                  </label>
+                  <label class="field">
+                    <span>Pincode</span>
+                    <input id="profile-pincode" name="pincode" type="text" inputmode="numeric" required />
+                  </label>
+                </div>
+                <div class="inline-actions">
+                  <button class="primary-button" id="save-profile-button" type="submit">Save account details</button>
+                  <p class="helper">These details prefill the order form and stay in Supabase, not in the repo.</p>
+                </div>
+              </form>
+            </div>
+          </article>
+
+          <article class="history-card">
+            <div class="card-shell">
+              <div class="section-head">
+                <div>
+                  <p class="section-kicker">Order history</p>
+                  <h2>Track every order and payment state.</h2>
+                </div>
+                <button class="secondary-button" id="refresh-orders" type="button">Refresh</button>
+              </div>
+              <div class="history-list" id="order-history-list">
+                <article class="empty-panel">
+                  <strong>No orders yet</strong>
+                  <p>Sign in and place an order to start building a secure order history timeline.</p>
+                </article>
+              </div>
+            </div>
+          </article>
+        </section>
+
         <section class="controls reveal" id="collection">
           <div class="controls-copy">
             <p class="section-kicker">Collection</p>
-            <h2>Scan the drop, filter by vibe, and copy an inquiry instantly.</h2>
+            <h2>Pick a figure, open its details, and start a structured order.</h2>
           </div>
 
           <div class="toolbar">
@@ -112,49 +226,65 @@
 
         <section class="catalog" id="catalog" aria-live="polite"></section>
 
-        <section class="exchange-note reveal">
-          <div>
-            <p class="section-kicker">Pricing note</p>
-            <h2>INR stays fixed. USD is estimated cleanly and transparently.</h2>
-          </div>
-          <p id="exchange-footnote"></p>
-        </section>
-
-        <section class="contact reveal" id="contact">
-          <div class="contact-card">
-            <p class="section-kicker">Claim Flow</p>
-            <h2>Launch-ready, with a simple buyer handoff.</h2>
-            <p>
-              Use the "Copy inquiry" button on any card, then paste that message
-              into Instagram, WhatsApp, Telegram, or email. Each figure is shown
-              as a one-piece collector item.
-            </p>
-            <div class="contact-grid">
-              <article>
-                <strong>Step 1</strong>
-                <p>Choose a figure and open its details if you want the full feature list.</p>
-              </article>
-              <article>
-                <strong>Step 2</strong>
-                <p>Copy the inquiry text so buyers can send the exact product code.</p>
-              </article>
-              <article>
-                <strong>Step 3</strong>
-                <p>Replace the contact placeholder with your real Instagram or WhatsApp before public posting.</p>
-              </article>
+        <section class="service-grid reveal" id="support">
+          <article class="support-card">
+            <div class="card-shell">
+              <p class="section-kicker">Customer service</p>
+              <h2>Give buyers a clean support path.</h2>
+              <div class="service-list">
+                <article>
+                  <strong>WhatsApp help</strong>
+                  <p id="support-whatsapp">Add your WhatsApp number in <code>supabase-config.js</code>.</p>
+                </article>
+                <article>
+                  <strong>Email support</strong>
+                  <p id="support-email">Add your support email in <code>supabase-config.js</code>.</p>
+                </article>
+                <article>
+                  <strong>Secure handling</strong>
+                  <p>Orders, support messages, and customer details are designed for Supabase with RLS policies.</p>
+                </article>
+              </div>
             </div>
-          </div>
+          </article>
+
+          <article class="support-card">
+            <div class="card-shell">
+              <p class="section-kicker">Support inbox</p>
+              <h2>Logged-in customers can raise a ticket.</h2>
+              <form class="stack-form" id="support-form">
+                <div class="field-grid">
+                  <label class="field field-wide">
+                    <span>Subject</span>
+                    <input id="support-subject" type="text" name="subject" required />
+                  </label>
+                  <label class="field field-wide">
+                    <span>Order reference (optional)</span>
+                    <input id="support-order-reference" type="text" name="order_reference" />
+                  </label>
+                  <label class="field field-wide">
+                    <span>Message</span>
+                    <textarea id="support-message" name="message" rows="5" required></textarea>
+                  </label>
+                </div>
+                <div class="inline-actions">
+                  <button class="primary-button" id="submit-support" type="submit">Send support request</button>
+                  <p class="helper">Support tickets are stored in Supabase for follow-up and history.</p>
+                </div>
+              </form>
+            </div>
+          </article>
         </section>
       </main>
 
       <footer class="footer">
         <p>Yengu</p>
-        <p>Collector showcase built from the local image set in this workspace.</p>
+        <p>Secure static storefront with Supabase-ready commerce flow and India-focused checkout.</p>
       </footer>
     </div>
 
     <dialog id="product-modal" class="product-modal">
-      <button class="modal-close" id="modal-close" aria-label="Close details">
+      <button class="modal-close" id="modal-close" aria-label="Close details" type="button">
         Close
       </button>
       <div class="modal-layout">
@@ -165,18 +295,194 @@
           <p id="modal-subtitle"></p>
           <div class="modal-price" id="modal-price"></div>
           <ul id="modal-features"></ul>
-          <button class="primary-button" id="modal-copy">Copy inquiry</button>
+          <div class="inline-actions inline-actions-tight">
+            <button class="primary-button" id="modal-order" type="button">Order this build</button>
+            <button class="secondary-button" id="modal-copy" type="button">Copy inquiry</button>
+          </div>
         </div>
+      </div>
+    </dialog>
+
+    <dialog id="auth-dialog" class="panel-dialog">
+      <button class="modal-close" id="auth-close" aria-label="Close account dialog" type="button">
+        Close
+      </button>
+      <div class="dialog-shell">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Account access</p>
+            <h2>Sign in or create an account before ordering.</h2>
+          </div>
+        </div>
+
+        <div class="segmented" id="auth-tabs">
+          <button class="segmented-button is-active" data-mode="signin" type="button">Sign in</button>
+          <button class="segmented-button" data-mode="signup" type="button">Create account</button>
+        </div>
+
+        <form class="stack-form" id="auth-form">
+          <div class="field-grid">
+            <label class="field auth-signup-only hidden">
+              <span>Full name</span>
+              <input id="auth-full-name" type="text" name="full_name" />
+            </label>
+            <label class="field field-wide">
+              <span>Email</span>
+              <input id="auth-email" type="email" name="email" required />
+            </label>
+            <label class="field">
+              <span>Password</span>
+              <input id="auth-password" type="password" name="password" minlength="6" required />
+            </label>
+            <label class="field auth-signup-only hidden">
+              <span>Phone</span>
+              <input id="auth-phone" type="tel" name="phone" inputmode="tel" />
+            </label>
+            <label class="field field-wide auth-signup-only hidden">
+              <span>Address line 1</span>
+              <input id="auth-line1" type="text" name="line1" />
+            </label>
+            <label class="field field-wide auth-signup-only hidden">
+              <span>Address line 2</span>
+              <input id="auth-line2" type="text" name="line2" />
+            </label>
+            <label class="field auth-signup-only hidden">
+              <span>City</span>
+              <input id="auth-city" type="text" name="city" />
+            </label>
+            <label class="field auth-signup-only hidden">
+              <span>State</span>
+              <input id="auth-state" type="text" name="state" />
+            </label>
+            <label class="field auth-signup-only hidden">
+              <span>Pincode</span>
+              <input id="auth-pincode" type="text" name="pincode" inputmode="numeric" />
+            </label>
+          </div>
+          <div class="inline-actions">
+            <button class="primary-button" id="auth-submit" type="submit">Continue</button>
+            <p class="helper" id="auth-helper">Use your account to unlock checkout and order history.</p>
+          </div>
+        </form>
+      </div>
+    </dialog>
+
+    <dialog id="order-dialog" class="panel-dialog">
+      <button class="modal-close" id="order-close" aria-label="Close order dialog" type="button">
+        Close
+      </button>
+      <div class="dialog-shell">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Order builder</p>
+            <h2 id="order-heading">Complete your secure order.</h2>
+          </div>
+        </div>
+
+        <form class="stack-form" id="order-form">
+          <div class="order-product-panel">
+            <div>
+              <strong id="order-product-title">Selected build</strong>
+              <p id="order-product-copy">Choose a figure from the collection to start.</p>
+            </div>
+            <div class="status-row">
+              <span class="status-pill" id="order-product-code">No code</span>
+              <span class="status-pill status-pill-soft" id="order-base-price">₹0</span>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>Delivery date</span>
+              <input id="order-delivery-date" type="date" name="delivery_date" required />
+            </label>
+            <label class="field field-wide">
+              <span>Full name</span>
+              <input id="order-full-name" type="text" name="full_name" required />
+            </label>
+            <label class="field">
+              <span>Email</span>
+              <input id="order-email" type="email" name="email" required />
+            </label>
+            <label class="field">
+              <span>Phone</span>
+              <input id="order-phone" type="tel" name="phone" inputmode="tel" required />
+            </label>
+            <label class="field field-wide">
+              <span>Address line 1</span>
+              <input id="order-line1" type="text" name="line1" required />
+            </label>
+            <label class="field field-wide">
+              <span>Address line 2</span>
+              <input id="order-line2" type="text" name="line2" />
+            </label>
+            <label class="field">
+              <span>City</span>
+              <input id="order-city" type="text" name="city" required />
+            </label>
+            <label class="field">
+              <span>State</span>
+              <input id="order-state" type="text" name="state" required />
+            </label>
+            <label class="field">
+              <span>Pincode</span>
+              <input id="order-pincode" type="text" name="pincode" inputmode="numeric" required />
+            </label>
+            <label class="field field-wide">
+              <span>Order notes</span>
+              <textarea id="order-notes" name="notes" rows="3"></textarea>
+            </label>
+          </div>
+
+          <label class="toggle-row" for="order-customization">
+            <input id="order-customization" type="checkbox" name="customization" />
+            <div>
+              <strong>Add customization (+₹1,000)</strong>
+              <p>Use this for custom detailing requests, colorway changes, or finish upgrades.</p>
+            </div>
+          </label>
+
+          <label class="field field-wide hidden" id="customization-notes-shell">
+            <span>Customization details</span>
+            <textarea id="order-customization-notes" name="customization_notes" rows="4"></textarea>
+          </label>
+
+          <div class="order-summary">
+            <div class="price-row">
+              <span>Base price</span>
+              <strong id="summary-base-price">₹0</strong>
+            </div>
+            <div class="price-row">
+              <span>Customization</span>
+              <strong id="summary-customization-price">₹0</strong>
+            </div>
+            <div class="price-row price-row-emphasis">
+              <span>Total</span>
+              <strong id="summary-total-price">₹0</strong>
+            </div>
+            <p class="helper">
+              Checkout is intended for Razorpay with UPI, cards, and netbanking once your live keys are connected.
+            </p>
+          </div>
+
+          <div class="inline-actions">
+            <button class="primary-button" id="checkout-button" type="submit">Proceed to secure checkout</button>
+            <button class="secondary-button" id="sync-profile-button" type="button">Use saved account details</button>
+          </div>
+        </form>
       </div>
     </dialog>
 
     <noscript>
       <p class="noscript">
-        This storefront uses a small script to render the catalog and USD values.
+        This storefront uses JavaScript for secure auth, order building, and Supabase-backed interactions.
         Please enable JavaScript.
       </p>
     </noscript>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="./supabase-config.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>
