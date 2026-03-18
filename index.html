@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Collector-grade Gundam showcase with local image-backed product cards, INR pricing, and filled USD estimates."
+    />
+    <title>Yengu | Collector Drop</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="hero">
+        <nav class="topbar">
+          <div class="brand">
+            <span class="brand-mark">YE</span>
+            <div>
+              <p class="eyebrow">Launch-Ready Storefront</p>
+              <h1>Yengu</h1>
+            </div>
+          </div>
+          <a class="ghost-link" href="#collection">Explore the collection</a>
+        </nav>
+
+        <div class="hero-grid">
+          <section class="hero-copy reveal">
+            <p class="section-kicker">One-off customs. Display-ready builds.</p>
+            <h2>
+              A bold catalog for your Gundam figures, priced in
+              <span>INR + USD</span>.
+            </h2>
+            <p class="hero-text">
+              Every card below is generated from the local Gundam image set in
+              this folder. The site keeps your INR pricing and fills the USD
+              value automatically using a recent INR to USD reference rate.
+            </p>
+
+            <div class="hero-actions">
+              <a class="primary-button" href="#collection">Browse figures</a>
+              <a class="secondary-button" href="#contact">Claim instructions</a>
+            </div>
+
+            <div class="hero-stats">
+              <article>
+                <strong id="stat-count">16</strong>
+                <span>unique builds</span>
+              </article>
+              <article>
+                <strong>1 of 1</strong>
+                <span>stock per figure</span>
+              </article>
+              <article>
+                <strong id="stat-range">INR + USD</strong>
+                <span>dual-currency display</span>
+              </article>
+            </div>
+          </section>
+
+          <aside class="hero-panel reveal">
+            <div class="signal-card">
+              <p class="panel-label">USD Fill Status</p>
+              <h3>Completed for all 16 products</h3>
+              <p>
+                USD estimates use a recent Wise mid-market INR to USD reference:
+                <strong id="exchange-rate-copy"></strong>
+              </p>
+            </div>
+
+            <div class="floating-cards">
+              <article class="mini-card">
+                <span class="mini-tag">LED Build</span>
+                <strong>00 Raiser Custom</strong>
+                <p>Metallic blue finish with a ring base and chest glow.</p>
+              </article>
+              <article class="mini-card">
+                <span class="mini-tag">Wing Heavy</span>
+                <strong>Strike Freedom</strong>
+                <p>Large silhouette with dramatic translucent wing effects.</p>
+              </article>
+              <article class="mini-card">
+                <span class="mini-tag">Collector Shelf</span>
+                <strong>Built to display</strong>
+                <p>Single-piece availability across the entire drop.</p>
+              </article>
+            </div>
+          </aside>
+        </div>
+      </header>
+
+      <main>
+        <section class="controls reveal" id="collection">
+          <div class="controls-copy">
+            <p class="section-kicker">Collection</p>
+            <h2>Scan the drop, filter by vibe, and copy an inquiry instantly.</h2>
+          </div>
+
+          <div class="toolbar">
+            <div class="filter-pills" id="filters" aria-label="Product filters"></div>
+            <label class="search-shell" for="search-input">
+              <span>Search</span>
+              <input
+                id="search-input"
+                type="search"
+                placeholder="Find a suit, style, or feature"
+                autocomplete="off"
+              />
+            </label>
+          </div>
+        </section>
+
+        <section class="catalog" id="catalog" aria-live="polite"></section>
+
+        <section class="exchange-note reveal">
+          <div>
+            <p class="section-kicker">Pricing note</p>
+            <h2>INR stays fixed. USD is estimated cleanly and transparently.</h2>
+          </div>
+          <p id="exchange-footnote"></p>
+        </section>
+
+        <section class="contact reveal" id="contact">
+          <div class="contact-card">
+            <p class="section-kicker">Claim Flow</p>
+            <h2>Launch-ready, with a simple buyer handoff.</h2>
+            <p>
+              Use the "Copy inquiry" button on any card, then paste that message
+              into Instagram, WhatsApp, Telegram, or email. Each figure is shown
+              as a one-piece collector item.
+            </p>
+            <div class="contact-grid">
+              <article>
+                <strong>Step 1</strong>
+                <p>Choose a figure and open its details if you want the full feature list.</p>
+              </article>
+              <article>
+                <strong>Step 2</strong>
+                <p>Copy the inquiry text so buyers can send the exact product code.</p>
+              </article>
+              <article>
+                <strong>Step 3</strong>
+                <p>Replace the contact placeholder with your real Instagram or WhatsApp before public posting.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p>Yengu</p>
+        <p>Collector showcase built from the local image set in this workspace.</p>
+      </footer>
+    </div>
+
+    <dialog id="product-modal" class="product-modal">
+      <button class="modal-close" id="modal-close" aria-label="Close details">
+        Close
+      </button>
+      <div class="modal-layout">
+        <img id="modal-image" alt="" />
+        <div class="modal-copy">
+          <p class="section-kicker" id="modal-code"></p>
+          <h2 id="modal-title"></h2>
+          <p id="modal-subtitle"></p>
+          <div class="modal-price" id="modal-price"></div>
+          <ul id="modal-features"></ul>
+          <button class="primary-button" id="modal-copy">Copy inquiry</button>
+        </div>
+      </div>
+    </dialog>
+
+    <noscript>
+      <p class="noscript">
+        This storefront uses a small script to render the catalog and USD values.
+        Please enable JavaScript.
+      </p>
+    </noscript>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
