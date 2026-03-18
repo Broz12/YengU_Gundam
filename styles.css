@@ -67,9 +67,9 @@ body::after {
   bottom: min(-6vw, -2rem);
   width: min(38vw, 420px);
   aspect-ratio: 1;
-  background: url("./assets/yengu-mark.svg") center / contain no-repeat;
-  opacity: 0.07;
-  filter: saturate(1.3);
+  background: url("./assets/yengu-swoop.svg") center / contain no-repeat;
+  opacity: 0.12;
+  filter: saturate(1.05);
   pointer-events: none;
 }
 
@@ -179,28 +179,30 @@ code {
   display: grid;
   place-items: center;
   position: relative;
-  width: 3.35rem;
+  width: 3.6rem;
   aspect-ratio: 1;
-  padding: 0.3rem;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 0.38rem;
+  border-radius: 20px;
+  border: 1px solid rgba(151, 214, 223, 0.26);
   background:
-    linear-gradient(135deg, rgba(255, 123, 84, 0.85), rgba(105, 212, 255, 0.8));
-  box-shadow: 0 16px 40px rgba(105, 212, 255, 0.18);
+    linear-gradient(180deg, rgba(250, 252, 253, 0.98), rgba(220, 232, 236, 0.9)),
+    rgba(244, 249, 250, 0.94);
+  box-shadow: 0 14px 36px rgba(34, 198, 200, 0.15);
 }
 
 .brand-mark::after {
   content: "";
   position: absolute;
   inset: 4px;
-  border-radius: 14px;
-  border: 1px solid rgba(6, 16, 25, 0.18);
+  border-radius: 16px;
+  border: 1px solid rgba(13, 29, 45, 0.08);
 }
 
 .brand-mark-image {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  filter: drop-shadow(0 7px 14px rgba(8, 16, 24, 0.14));
 }
 
 .brand h1 {
@@ -388,8 +390,8 @@ code {
   right: 1.25rem;
   width: 94px;
   aspect-ratio: 1;
-  background: url("./assets/yengu-mark.svg") center / contain no-repeat;
-  opacity: 0.08;
+  background: url("./assets/yengu-swoop.svg") center / contain no-repeat;
+  opacity: 0.14;
   pointer-events: none;
 }
 
@@ -680,9 +682,160 @@ code {
 
 .setup-banner,
 .controls,
-.support-card {
+.support-card,
+.account-bridge,
+.spotlight-section,
+.auth-stage-copy,
+.auth-stage-panel {
   padding: 1.5rem;
   margin-top: 1.5rem;
+}
+
+.page-hero {
+  padding-bottom: 0.25rem;
+}
+
+.auth-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+}
+
+.auth-stage-copy,
+.auth-stage-panel,
+.account-bridge,
+.spotlight-section {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 18%),
+    rgba(9, 18, 27, 0.9);
+  box-shadow: var(--shadow-soft);
+}
+
+.auth-stage-panel {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
+.account-bridge-shell {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.account-bridge-panel {
+  max-width: 360px;
+}
+
+.spotlight-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 30vw);
+  gap: 1rem;
+  margin-top: 1.25rem;
+  overflow-x: auto;
+  padding-bottom: 0.4rem;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+}
+
+.spotlight-card {
+  scroll-snap-align: start;
+  overflow: hidden;
+  border: 1px solid rgba(244, 237, 223, 0.1);
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 24%),
+    rgba(9, 18, 27, 0.96);
+  box-shadow: var(--shadow-soft);
+}
+
+.spotlight-visual {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.spotlight-visual img {
+  width: 100%;
+  aspect-ratio: 1 / 1.06;
+  object-fit: cover;
+  transition: transform 280ms ease, filter 280ms ease;
+}
+
+.spotlight-card:hover .spotlight-visual img,
+.spotlight-card:focus-within .spotlight-visual img {
+  transform: scale(1.04);
+  filter: saturate(1.08);
+}
+
+.spotlight-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(4, 7, 11, 0.08), transparent 32%, rgba(4, 7, 11, 0.7) 100%),
+    radial-gradient(circle at top right, rgba(105, 212, 255, 0.22), transparent 32%);
+}
+
+.spotlight-badges {
+  position: absolute;
+  inset: auto 1rem 1rem auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  align-items: end;
+  z-index: 1;
+}
+
+.spotlight-copy {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem 1rem 1.1rem;
+}
+
+.spotlight-copy h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.02;
+}
+
+.spotlight-copy p {
+  margin: 0;
+}
+
+.spotlight-footer {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 0.35rem;
+}
+
+.spotlight-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(244, 237, 223, 0.1);
+}
+
+.spotlight-price span {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--success);
+}
+
+.spotlight-price small {
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 
 .commerce-grid,
@@ -758,6 +911,13 @@ code {
 
 .field input[readonly] {
   opacity: 0.78;
+}
+
+.account-card .section-head h2,
+.history-card .section-head h2,
+.support-card h2 {
+  font-size: clamp(1.4rem, 3vw, 2.1rem);
+  line-height: 1.03;
 }
 
 .field-wide {
@@ -848,12 +1008,15 @@ code {
 
 .catalog {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.2rem;
   margin-top: 1.5rem;
 }
 
 .catalog-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(244, 237, 223, 0.1);
@@ -865,7 +1028,8 @@ code {
   transition:
     transform 220ms ease,
     border-color 220ms ease,
-    box-shadow 220ms ease;
+    box-shadow 220ms ease,
+    background-color 220ms ease;
 }
 
 .catalog-card:hover,
@@ -875,9 +1039,18 @@ code {
   box-shadow: 0 28px 62px rgba(0, 0, 0, 0.34);
 }
 
+.card-visual {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
 .card-media {
   position: relative;
-  aspect-ratio: 1 / 1.04;
+  aspect-ratio: 1 / 0.98;
   overflow: hidden;
   background: #09111a;
 }
@@ -960,13 +1133,13 @@ code {
 }
 
 .card-body {
-  display: grid;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   gap: 0.95rem;
   position: relative;
-  padding: 1.2rem;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 20%),
-    var(--card-strong);
+  padding: 1.05rem 1.1rem 1.1rem;
+  background: rgba(14, 25, 36, 0.92);
 }
 
 .card-body::before {
@@ -987,8 +1160,14 @@ code {
 
 .card-header h3 {
   margin: 0.35rem 0 0;
-  font-size: 1.3rem;
+  font-size: 1.22rem;
   line-height: 1.12;
+}
+
+.card-subtitle {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.52;
 }
 
 .code-pill {
@@ -1004,22 +1183,21 @@ code {
   text-transform: uppercase;
 }
 
-.feature-list {
-  margin: 0;
-  padding-left: 1rem;
-  color: var(--muted);
-  line-height: 1.55;
-}
-
-.feature-list li + li {
-  margin-top: 0.3rem;
-}
-
 .price-panel,
 .order-summary {
   display: grid;
   gap: 0.35rem;
   padding: 1rem;
+}
+
+.price-panel-compact {
+  gap: 0.45rem;
+  padding: 0;
+  margin-top: 0.1rem;
+}
+
+.price-panel-compact .price-row strong {
+  font-size: 1rem;
 }
 
 .price-row {
@@ -1051,9 +1229,30 @@ code {
   color: var(--success);
 }
 
+.card-footer {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: auto;
+  padding-top: 0.95rem;
+  border-top: 1px solid rgba(244, 237, 223, 0.08);
+}
+
+.card-meta-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .card-actions {
   display: flex;
   gap: 0.7rem;
+  align-items: stretch;
 }
 
 .card-actions button {
@@ -1196,14 +1395,20 @@ code {
 
 @media (max-width: 1080px) {
   .hero-grid,
+  .auth-stage,
   .commerce-grid,
   .service-grid,
   .modal-layout {
     grid-template-columns: 1fr;
   }
 
-  .catalog {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .account-bridge-shell {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .spotlight-track {
+    grid-auto-columns: minmax(240px, 72vw);
   }
 
   .gallery-feature {
@@ -1247,6 +1452,10 @@ code {
   .gallery-badge,
   .mini-card:last-child {
     grid-column: auto;
+  }
+
+  .spotlight-track {
+    grid-auto-columns: minmax(220px, 84vw);
   }
 
   .modal-copy,

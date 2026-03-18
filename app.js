@@ -282,6 +282,9 @@ const products = [
 
 const filters = ["all", "custom", "wings", "premium", "led", "classic"];
 const productMap = new Map(products.map((product) => [product.code, product]));
+const featuredProducts = products.filter((product) => product.tags.includes("featured")).length
+  ? products.filter((product) => product.tags.includes("featured"))
+  : products.slice(0, 6);
 
 const state = {
   activeFilter: "all",
@@ -305,12 +308,15 @@ const dom = {
   setupBanner: document.querySelector("#setup-banner"),
   setupBannerHeadline: document.querySelector("#setup-banner-headline"),
   setupBannerCopy: document.querySelector("#setup-banner-copy"),
+  spotlightTrack: document.querySelector("#spotlight-track"),
   filters: document.querySelector("#filters"),
   catalog: document.querySelector("#catalog"),
   searchInput: document.querySelector("#search-input"),
   accountShortcut: document.querySelector("#account-shortcut"),
   openAuth: document.querySelector("#open-auth"),
+  openAuthInline: document.querySelector("#open-auth-inline"),
   signOutButton: document.querySelector("#sign-out-button"),
+  accountHeadline: document.querySelector("#account-headline"),
   accountName: document.querySelector("#account-name"),
   accountSummaryCopy: document.querySelector("#account-summary-copy"),
   accountStatusPill: document.querySelector("#account-status-pill"),
@@ -444,6 +450,14 @@ function getPriceBreakdown(product, customizationRequested = false) {
   };
 }
 
+function getPrimaryTagLabel(product) {
+  return (product.tags[0] || "custom").replaceAll("-", " ");
+}
+
+function navigateToAccountPage() {
+  window.location.href = "./auth.html";
+}
+
 function formatDateForInput(daysAhead = defaultDeliveryLeadDays) {
   const date = new Date();
   date.setDate(date.getDate() + daysAhead);
@@ -559,73 +573,123 @@ function matchesFilter(product, filter) {
   return product.tags.includes(filter);
 }
 
+function buildSpotlightCard(product) {
+  const breakdown = getPriceBreakdown(product);
+  const article = document.createElement("article");
+  article.className = "spotlight-card";
+  article.innerHTML = `
+    <button class="spotlight-visual" data-action="details" type="button" aria-label="Open details for ${product.title}">
+      <img src="${product.image}" alt="${product.title}" loading="lazy" decoding="async" />
+      <div class="spotlight-overlay"></div>
+      <div class="spotlight-badges">
+        <span class="media-badge media-badge-sale">${breakdown.discountLabel}</span>
+        <span class="media-badge">${product.code}</span>
+      </div>
+    </button>
+    <div class="spotlight-copy">
+      <p class="section-kicker">${getPrimaryTagLabel(product)}</p>
+      <h3>${product.title}</h3>
+      <p>${product.subtitle}</p>
+      <div class="spotlight-footer">
+        <div class="spotlight-price">
+          <span>${inrFormatter.format(breakdown.discountedBase)}</span>
+          <small>${usdFormatter.format(toUsd(breakdown.discountedBase))}</small>
+        </div>
+        <div class="card-actions">
+          <button class="action-button" data-action="details" type="button">Details</button>
+          <button class="primary-button" data-action="order" type="button">Order</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  article.querySelectorAll('[data-action="details"]').forEach((node) => {
+    node.addEventListener("click", () => openProductModal(product));
+  });
+  article.querySelector('[data-action="order"]').addEventListener("click", () => openOrderFlow(product));
+
+  return article;
+}
+
+function renderSpotlight() {
+  if (!dom.spotlightTrack) return;
+  dom.spotlightTrack.innerHTML = "";
+
+  featuredProducts.forEach((product) => {
+    dom.spotlightTrack.appendChild(buildSpotlightCard(product));
+  });
+}
+
 function buildCard(product) {
   const article = document.createElement("article");
   article.className = "catalog-card reveal";
   const breakdown = getPriceBreakdown(product);
 
   article.innerHTML = `
-    <figure class="card-media">
-      <img src="${product.image}" alt="${product.title}" loading="lazy" decoding="async" />
-      <div class="media-badges">
-        <span class="media-badge media-badge-sale">${breakdown.discountLabel}</span>
-        <span class="media-badge">1 of 1</span>
-      </div>
-      <div class="card-tags">
-        ${product.tags
-          .slice(0, 3)
-          .map((tag) => `<span class="card-tag">${tag.replace("-", " ")}</span>`)
-          .join("")}
-      </div>
-    </figure>
+    <button class="card-visual" data-action="details" type="button" aria-label="Open details for ${product.title}">
+      <figure class="card-media">
+        <img src="${product.image}" alt="${product.title}" loading="lazy" decoding="async" />
+        <div class="media-badges">
+          <span class="media-badge media-badge-sale">${breakdown.discountLabel}</span>
+          <span class="media-badge">1 of 1</span>
+        </div>
+        <div class="card-tags">
+          ${product.tags
+            .slice(0, 2)
+            .map((tag) => `<span class="card-tag">${tag.replace("-", " ")}</span>`)
+            .join("")}
+        </div>
+      </figure>
+    </button>
     <div class="card-body">
       <div class="card-header">
         <div>
-          <p class="section-kicker">Collector Listing</p>
+          <p class="section-kicker">${getPrimaryTagLabel(product)}</p>
           <h3>${product.title}</h3>
         </div>
         <span class="code-pill">${product.code}</span>
       </div>
-      <p>${product.subtitle}</p>
-      <ul class="feature-list">
-        ${product.features.slice(0, 3).map((item) => `<li>${item}</li>`).join("")}
-      </ul>
-      <div class="price-panel">
+      <p class="card-subtitle">${product.subtitle}</p>
+      <div class="price-panel price-panel-compact">
         <div class="price-row">
-          <span>Original</span>
-          <strong class="price-strike">${inrFormatter.format(breakdown.originalBase)}</strong>
-        </div>
-        <div class="price-row">
-          <span>Discount</span>
-          <strong class="price-discount">${breakdown.discountLabel}</strong>
-        </div>
-        <div class="price-row price-row-emphasis">
-          <span>Sale price</span>
+          <span>From</span>
           <strong>${inrFormatter.format(breakdown.discountedBase)}</strong>
         </div>
         <div class="price-row">
-          <span>USD est.</span>
+          <span>Was</span>
+          <strong class="price-strike">${inrFormatter.format(breakdown.originalBase)}</strong>
+        </div>
+        <div class="price-row">
+          <span>USD</span>
           <strong>${usdFormatter.format(toUsd(breakdown.discountedBase))}</strong>
         </div>
-        <p class="price-caption"><strong>${breakdown.discountLabel} applied automatically.</strong> Customization adds ${inrFormatter.format(customizationFeeInr)} after discount. Login is required before checkout.</p>
       </div>
-      <div class="card-actions">
-        <button class="action-button" data-action="details" type="button">View details</button>
-        <button class="primary-button" data-action="order" type="button">Order now</button>
+      <div class="card-footer">
+        <div class="card-meta-line">
+          <span>${breakdown.discountLabel}</span>
+          <span>Custom +${inrFormatter.format(customizationFeeInr)}</span>
+        </div>
+        <div class="card-actions">
+          <button class="action-button" data-action="details" type="button">View details</button>
+          <button class="primary-button" data-action="order" type="button">Order now</button>
+        </div>
       </div>
     </div>
   `;
 
-  const detailsButton = article.querySelector('[data-action="details"]');
+  const detailsButtons = article.querySelectorAll('[data-action="details"]');
   const orderButton = article.querySelector('[data-action="order"]');
 
-  detailsButton.addEventListener("click", () => openProductModal(product));
+  detailsButtons.forEach((node) => {
+    node.addEventListener("click", () => openProductModal(product));
+  });
   orderButton.addEventListener("click", () => openOrderFlow(product));
 
   return article;
 }
 
 function renderFilters() {
+  if (!dom.filters) return;
   dom.filters.innerHTML = "";
 
   filters.forEach((filter) => {
@@ -643,6 +707,7 @@ function renderFilters() {
 }
 
 function renderCatalog() {
+  if (!dom.catalog || !dom.searchInput) return;
   const query = dom.searchInput.value.trim();
   const visibleProducts = products.filter(
     (product) => matchesFilter(product, state.activeFilter) && matchesSearch(product, query),
@@ -674,10 +739,21 @@ function renderCatalog() {
 }
 
 function renderStats() {
+  if (!dom.statCount) return;
   dom.statCount.textContent = String(products.length);
 }
 
 function renderSetupState() {
+  if (
+    !dom.commerceHeadline ||
+    !dom.commerceCopy ||
+    !dom.setupStatusPill ||
+    !dom.setupBannerCopy ||
+    !dom.setupBannerHeadline
+  ) {
+    return;
+  }
+
   const supabaseIssues = getSupabaseSetupIssues();
   const checkoutIssues = getCheckoutSetupIssues();
   const supabaseReady = supabaseIssues.length === 0;
@@ -724,12 +800,16 @@ function renderSetupState() {
 }
 
 function updateSupportChannels() {
-  dom.supportEmail.textContent = publicConfig.supportEmail
-    ? publicConfig.supportEmail
-    : "Add your support email in supabase-config.js.";
-  dom.supportWhatsapp.textContent = publicConfig.supportWhatsapp
-    ? publicConfig.supportWhatsapp
-    : "Add your WhatsApp number in supabase-config.js.";
+  if (dom.supportEmail) {
+    dom.supportEmail.textContent = publicConfig.supportEmail
+      ? publicConfig.supportEmail
+      : "Add your support email in supabase-config.js.";
+  }
+  if (dom.supportWhatsapp) {
+    dom.supportWhatsapp.textContent = publicConfig.supportWhatsapp
+      ? publicConfig.supportWhatsapp
+      : "Add your WhatsApp number in supabase-config.js.";
+  }
 }
 
 function getProfileSeed() {
@@ -749,7 +829,14 @@ function getProfileSeed() {
 }
 
 function populateProfileForm() {
-  if (!state.session) return;
+  if (
+    !state.session ||
+    !document.querySelector("#profile-full-name") ||
+    !document.querySelector("#profile-phone") ||
+    !document.querySelector("#profile-email")
+  ) {
+    return;
+  }
   const seed = getProfileSeed();
   document.querySelector("#profile-full-name").value = seed.full_name;
   document.querySelector("#profile-phone").value = seed.phone;
@@ -762,6 +849,14 @@ function populateProfileForm() {
 }
 
 function populateOrderFormFromProfile() {
+  if (
+    !document.querySelector("#order-full-name") ||
+    !document.querySelector("#order-phone") ||
+    !document.querySelector("#order-email")
+  ) {
+    return;
+  }
+
   const seed = getProfileSeed();
   document.querySelector("#order-full-name").value = seed.full_name;
   document.querySelector("#order-phone").value = seed.phone;
@@ -774,29 +869,44 @@ function populateOrderFormFromProfile() {
 }
 
 function renderAccountHub() {
+  if (dom.authStat) {
+    dom.authStat.textContent = state.session
+      ? getProfileSeed().full_name || state.session.user.email || "Signed in"
+      : "Guest mode";
+  }
+
+  if (dom.authStatusPill) {
+    dom.authStatusPill.textContent = state.session ? "Signed in" : "Guest";
+    dom.authStatusPill.className = state.session
+      ? "status-pill status-pill-success"
+      : "status-pill";
+  }
+
+  if (!dom.accountName || !dom.accountSummaryCopy || !dom.accountStatusPill) {
+    return;
+  }
+
   if (!state.session) {
-    dom.authStat.textContent = "Guest mode";
-    dom.authStatusPill.textContent = "Guest";
-    dom.authStatusPill.className = "status-pill";
     dom.accountStatusPill.textContent = "Not signed in";
     dom.accountStatusPill.className = "status-pill";
     dom.accountName.textContent = "Guest customer";
     dom.accountSummaryCopy.textContent =
       "Sign in to unlock checkout, order history, support tickets, and saved address details.";
+    if (dom.accountHeadline) dom.accountHeadline.textContent = "Login to unlock your saved account.";
+    if (dom.openAuthInline) dom.openAuthInline.textContent = "Sign in / Create account";
     setHidden(dom.profileForm, true);
     setHidden(dom.signOutButton, true);
     return;
   }
 
   const seed = getProfileSeed();
-  dom.authStat.textContent = seed.full_name || state.session.user.email || "Signed in";
-  dom.authStatusPill.textContent = "Signed in";
-  dom.authStatusPill.className = "status-pill status-pill-success";
   dom.accountStatusPill.textContent = "Ready to order";
   dom.accountStatusPill.className = "status-pill status-pill-success";
   dom.accountName.textContent = seed.full_name || state.session.user.email;
   dom.accountSummaryCopy.textContent =
     "Your account details are saved and can prefill checkout, order history, and support requests.";
+  if (dom.accountHeadline) dom.accountHeadline.textContent = "Your saved account details.";
+  if (dom.openAuthInline) dom.openAuthInline.textContent = "Manage login";
   setHidden(dom.profileForm, false);
   setHidden(dom.signOutButton, false);
   populateProfileForm();
@@ -857,6 +967,7 @@ function getProfileFormPayload() {
 }
 
 function setAuthMode(mode) {
+  if (!dom.authTabs || !dom.authSubmit || !dom.authHelper) return;
   state.authMode = mode;
   dom.authTabs.querySelectorAll(".segmented-button").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.mode === mode);
@@ -874,14 +985,30 @@ function setAuthMode(mode) {
 }
 
 function openAuthDialog() {
+  if (!dom.authDialog || typeof dom.authDialog.showModal !== "function") {
+    navigateToAccountPage();
+    return;
+  }
   dom.authDialog.showModal();
 }
 
 function closeAuthDialog() {
+  if (!dom.authDialog || typeof dom.authDialog.close !== "function") return;
   dom.authDialog.close();
 }
 
 function openProductModal(product) {
+  if (
+    !dom.productModal ||
+    !dom.modalImage ||
+    !dom.modalCode ||
+    !dom.modalTitle ||
+    !dom.modalSubtitle ||
+    !dom.modalPrice ||
+    !dom.modalFeatures
+  ) {
+    return;
+  }
   state.selectedProduct = product;
   const breakdown = getPriceBreakdown(product);
   dom.modalImage.src = product.image;
@@ -918,11 +1045,21 @@ function openProductModal(product) {
 }
 
 function closeProductModal() {
+  if (!dom.productModal || typeof dom.productModal.close !== "function") return;
   dom.productModal.close();
   state.selectedProduct = null;
 }
 
 function setOrderDialogProduct(product) {
+  if (
+    !dom.orderHeading ||
+    !dom.orderProductTitle ||
+    !dom.orderProductCopy ||
+    !dom.orderProductCode ||
+    !dom.orderBasePrice
+  ) {
+    return;
+  }
   state.orderProduct = product;
   const breakdown = getPriceBreakdown(product);
   dom.orderHeading.textContent = `Complete your ${product.title} order.`;
@@ -945,11 +1082,17 @@ function openOrderFlow(product) {
     return;
   }
 
+  if (!dom.orderDialog || typeof dom.orderDialog.showModal !== "function") {
+    navigateToAccountPage();
+    return;
+  }
+
   setOrderDialogProduct(product);
   dom.orderDialog.showModal();
 }
 
 function closeOrderDialog() {
+  if (!dom.orderDialog || !dom.orderForm || typeof dom.orderDialog.close !== "function") return;
   dom.orderDialog.close();
   state.orderProduct = null;
   dom.orderForm.reset();
@@ -959,6 +1102,17 @@ function closeOrderDialog() {
 }
 
 function updateOrderSummary() {
+  if (
+    !dom.customizationCheckbox ||
+    !dom.summaryOriginalPrice ||
+    !dom.summaryDiscountPrice ||
+    !dom.summaryBasePrice ||
+    !dom.summaryCustomizationPrice ||
+    !dom.summaryTotalPrice
+  ) {
+    return;
+  }
+
   const breakdown = getPriceBreakdown(state.orderProduct, dom.customizationCheckbox.checked);
 
   setHidden(dom.customizationNotesShell, !dom.customizationCheckbox.checked);
@@ -1046,6 +1200,7 @@ function buildRazorpayOptions(orderResponse, payload) {
 }
 
 async function loadOrderHistory() {
+  if (!dom.orderHistoryList) return;
   if (!supabaseClient || !state.session) {
     dom.orderHistoryList.innerHTML = `
       <article class="empty-panel">
@@ -1307,6 +1462,7 @@ async function handleSupportSubmit(event) {
 
 function observeReveal() {
   const nodes = document.querySelectorAll(".reveal");
+  if (!nodes.length) return;
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -1325,6 +1481,7 @@ function observeReveal() {
 }
 
 function bindDialogBackdropClose(dialog, closeHandler) {
+  if (!dialog) return;
   dialog.addEventListener("click", (event) => {
     const bounds = dialog.getBoundingClientRect();
     const outside =
@@ -1337,41 +1494,47 @@ function bindDialogBackdropClose(dialog, closeHandler) {
 }
 
 function bindEvents() {
-  dom.searchInput.addEventListener("input", renderCatalog);
-  dom.accountShortcut.addEventListener("click", () => {
-    document.querySelector("#account-hub").scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-  dom.openAuth.addEventListener("click", openAuthDialog);
-  dom.signOutButton.addEventListener("click", async () => {
+  if (dom.searchInput) dom.searchInput.addEventListener("input", renderCatalog);
+  if (dom.accountShortcut && dom.accountShortcut.tagName === "BUTTON") {
+    dom.accountShortcut.addEventListener("click", () => {
+      const target = document.querySelector("#account-hub");
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+  if (dom.openAuth) dom.openAuth.addEventListener("click", openAuthDialog);
+  if (dom.openAuthInline) dom.openAuthInline.addEventListener("click", openAuthDialog);
+  if (dom.signOutButton) dom.signOutButton.addEventListener("click", async () => {
     if (!supabaseClient) return;
     await supabaseClient.auth.signOut();
     setNotice("Signed out.", "success");
   });
-  dom.profileForm.addEventListener("submit", handleProfileSubmit);
-  dom.refreshOrders.addEventListener("click", loadOrderHistory);
-  dom.supportForm.addEventListener("submit", handleSupportSubmit);
+  if (dom.profileForm) dom.profileForm.addEventListener("submit", handleProfileSubmit);
+  if (dom.refreshOrders) dom.refreshOrders.addEventListener("click", loadOrderHistory);
+  if (dom.supportForm) dom.supportForm.addEventListener("submit", handleSupportSubmit);
 
-  dom.modalClose.addEventListener("click", closeProductModal);
-  dom.modalOrder.addEventListener("click", () => {
+  if (dom.modalClose) dom.modalClose.addEventListener("click", closeProductModal);
+  if (dom.modalOrder) dom.modalOrder.addEventListener("click", () => {
     if (state.selectedProduct) {
       closeProductModal();
       openOrderFlow(state.selectedProduct);
     }
   });
-  dom.modalCopy.addEventListener("click", () => {
+  if (dom.modalCopy) dom.modalCopy.addEventListener("click", () => {
     if (state.selectedProduct) copyInquiry(state.selectedProduct);
   });
 
-  dom.authClose.addEventListener("click", closeAuthDialog);
-  dom.authTabs.querySelectorAll(".segmented-button").forEach((button) => {
-    button.addEventListener("click", () => setAuthMode(button.dataset.mode));
-  });
-  dom.authForm.addEventListener("submit", handleAuthSubmit);
+  if (dom.authClose) dom.authClose.addEventListener("click", closeAuthDialog);
+  if (dom.authTabs) {
+    dom.authTabs.querySelectorAll(".segmented-button").forEach((button) => {
+      button.addEventListener("click", () => setAuthMode(button.dataset.mode));
+    });
+  }
+  if (dom.authForm) dom.authForm.addEventListener("submit", handleAuthSubmit);
 
-  dom.orderClose.addEventListener("click", closeOrderDialog);
-  dom.orderForm.addEventListener("submit", handleOrderSubmit);
-  dom.customizationCheckbox.addEventListener("change", updateOrderSummary);
-  dom.syncProfileButton.addEventListener("click", () => {
+  if (dom.orderClose) dom.orderClose.addEventListener("click", closeOrderDialog);
+  if (dom.orderForm) dom.orderForm.addEventListener("submit", handleOrderSubmit);
+  if (dom.customizationCheckbox) dom.customizationCheckbox.addEventListener("change", updateOrderSummary);
+  if (dom.syncProfileButton) dom.syncProfileButton.addEventListener("click", () => {
     populateOrderFormFromProfile();
     updateOrderSummary();
     setNotice("Saved account details loaded into the order form.", "success");
@@ -1383,12 +1546,15 @@ function bindEvents() {
 }
 
 function setOrderDefaults() {
-  document.querySelector("#order-delivery-date").min = formatDateForInput(1);
-  document.querySelector("#order-delivery-date").value = formatDateForInput();
+  const deliveryDateField = document.querySelector("#order-delivery-date");
+  if (!deliveryDateField) return;
+  deliveryDateField.min = formatDateForInput(1);
+  deliveryDateField.value = formatDateForInput();
 }
 
 function init() {
   renderStats();
+  renderSpotlight();
   renderFilters();
   renderCatalog();
   renderSetupState();

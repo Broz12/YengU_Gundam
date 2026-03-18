@@ -10,7 +10,7 @@
     <title>Yengu | Secure Collector Checkout</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
+  <body data-page="home">
     <div class="site-shell">
       <div class="app-notice hidden" id="app-notice" role="alert"></div>
 
@@ -18,7 +18,7 @@
         <nav class="topbar">
           <div class="brand">
             <span class="brand-mark">
-              <img src="./assets/yengu-mark.svg" alt="" class="brand-mark-image" />
+              <img src="./assets/yengu-swoop.svg" alt="" class="brand-mark-image" />
             </span>
             <div>
               <p class="eyebrow">Secure Collector Store</p>
@@ -27,48 +27,47 @@
           </div>
 
           <div class="topbar-actions">
+            <a class="ghost-link" href="./index.html">Home</a>
             <a class="ghost-link" href="#collection">Collection</a>
-            <a class="ghost-link" href="#support">Customer service</a>
-            <button class="ghost-link" id="account-shortcut" type="button">Account</button>
+            <a class="ghost-link" href="./auth.html" id="account-shortcut">Account</a>
           </div>
         </nav>
 
         <div class="hero-grid">
           <section class="hero-copy reveal">
             <div class="brand-ribbon">
-              <span>Hand-built showcase</span>
-              <span>Secure order flow</span>
-              <span>Premium custom drop</span>
+              <span>Image-first browse</span>
+              <span>Popup details</span>
+              <span>Smooth glide</span>
             </div>
-            <p class="section-kicker">One-off customs. Secure ordering.</p>
+            <p class="section-kicker">Collector Drop</p>
             <h2>
-              Clean checkout flow for premium Gundam orders,
-              <span>built for India-first payments.</span>
+              Browse custom Gundam builds with
+              <span>clean cards and fast pop-up details.</span>
             </h2>
             <p class="hero-text">
-              Buyers can browse, create an account, save their address, choose
-              a delivery date, request customization, and pay securely. Orders,
-              account details, and support history are designed to live in
-              Supabase rather than in the repo.
+              The home page stays focused on pictures, price, and motion.
+              Login, saved details, order history, and support live on a
+              separate account page.
             </p>
 
             <div class="hero-actions">
               <a class="primary-button" href="#collection">Browse figures</a>
-              <a class="secondary-button" href="#account-hub">Open account hub</a>
+              <a class="secondary-button" href="./auth.html">Open account page</a>
             </div>
 
             <div class="hero-stats">
               <article>
                 <strong id="stat-count">16</strong>
-                <span>collector builds</span>
+                <span>display builds</span>
               </article>
               <article>
-                <strong>+₹1,000</strong>
-                <span>customization surcharge</span>
+                <strong>Pop-up</strong>
+                <span>full product details</span>
               </article>
               <article>
                 <strong id="auth-stat">Guest mode</strong>
-                <span>login required to order</span>
+                <span>account page for login</span>
               </article>
             </div>
           </section>
@@ -97,35 +96,35 @@
             </div>
 
             <div class="signal-card">
-              <p class="panel-label">Commerce status</p>
-              <h3 id="commerce-headline">Config needed for live checkout</h3>
+              <p class="panel-label">Browse mode</p>
+              <h3 id="commerce-headline">Clean picture-first collection</h3>
               <p id="commerce-copy">
-                Connect Supabase and Razorpay keys to unlock account login,
-                secure order capture, and payment verification.
+                Cards stay short. Open a product to see details, pricing,
+                and order actions in one focused popup.
               </p>
               <div class="status-row">
                 <span class="status-pill" id="auth-status-pill">Guest</span>
                 <span class="status-pill status-pill-soft" id="setup-status-pill">
-                  Setup pending
+                  Home page
                 </span>
               </div>
             </div>
 
             <div class="floating-cards">
               <article class="mini-card">
-                <span class="mini-tag">Auth + Profiles</span>
-                <strong>Account-gated checkout</strong>
-                <p>Email/password login with saved shipping details and profile edits.</p>
+                <span class="mini-tag">Quick view</span>
+                <strong>Tap image, get details</strong>
+                <p>Big visuals first, all deeper copy inside the popup.</p>
               </article>
               <article class="mini-card">
-                <span class="mini-tag">Orders + History</span>
-                <strong>Delivery date and customization</strong>
-                <p>Every order stores delivery date, customization notes, and payment state.</p>
+                <span class="mini-tag">Less clutter</span>
+                <strong>No form wall on home</strong>
+                <p>Account, history, and support move to their own page.</p>
               </article>
               <article class="mini-card">
-                <span class="mini-tag">India Payments</span>
-                <strong>Razorpay-ready flow</strong>
-                <p>Built for UPI, cards, netbanking, and Razorpay order verification.</p>
+                <span class="mini-tag">Smooth flow</span>
+                <strong>Glide, snap, browse</strong>
+                <p>Horizontal spotlight rail and lighter cards make scanning faster.</p>
               </article>
             </div>
           </aside>
@@ -135,8 +134,8 @@
       <main>
         <section class="setup-banner reveal hidden" id="setup-banner">
           <div>
-            <p class="section-kicker">Go live checklist</p>
-            <h2 id="setup-banner-headline">Wire Supabase + Razorpay to turn the storefront fully live.</h2>
+            <p class="section-kicker">Commerce setup</p>
+            <h2 id="setup-banner-headline">Connect payments and auth when you are ready to go live.</h2>
           </div>
           <p id="setup-banner-copy">
             Add your public Supabase URL, publishable key, and Razorpay key id inside
@@ -145,98 +144,36 @@
           </p>
         </section>
 
-        <section class="commerce-grid reveal" id="account-hub">
-          <article class="account-card">
-            <div class="card-shell">
-              <div class="section-head">
-                <div>
-                  <p class="section-kicker">Account hub</p>
-                  <h2>Login is required before ordering.</h2>
-                </div>
-                <button class="secondary-button" id="open-auth" type="button">
-                  Sign in / Create account
-                </button>
-              </div>
-
-              <div class="account-summary" id="account-summary">
-                <div>
-                  <strong class="summary-title" id="account-name">Guest customer</strong>
-                  <p id="account-summary-copy">
-                    Sign in to unlock checkout, order history, support tickets, and saved address details.
-                  </p>
-                </div>
-                <div class="status-row">
-                  <span class="status-pill" id="account-status-pill">Not signed in</span>
-                  <button class="ghost-link hidden" id="sign-out-button" type="button">Sign out</button>
-                </div>
-              </div>
-
-              <form class="stack-form hidden" id="profile-form">
-                <div class="field-grid">
-                  <label class="field">
-                    <span>Full name</span>
-                    <input id="profile-full-name" name="full_name" type="text" required />
-                  </label>
-                  <label class="field">
-                    <span>Phone</span>
-                    <input id="profile-phone" name="phone" type="tel" inputmode="tel" required />
-                  </label>
-                  <label class="field field-wide">
-                    <span>Email</span>
-                    <input id="profile-email" name="email" type="email" readonly />
-                  </label>
-                  <label class="field field-wide">
-                    <span>Address line 1</span>
-                    <input id="profile-line1" name="line1" type="text" required />
-                  </label>
-                  <label class="field field-wide">
-                    <span>Address line 2</span>
-                    <input id="profile-line2" name="line2" type="text" />
-                  </label>
-                  <label class="field">
-                    <span>City</span>
-                    <input id="profile-city" name="city" type="text" required />
-                  </label>
-                  <label class="field">
-                    <span>State</span>
-                    <input id="profile-state" name="state" type="text" required />
-                  </label>
-                  <label class="field">
-                    <span>Pincode</span>
-                    <input id="profile-pincode" name="pincode" type="text" inputmode="numeric" required />
-                  </label>
-                </div>
-                <div class="inline-actions">
-                  <button class="primary-button" id="save-profile-button" type="submit">Save account details</button>
-                  <p class="helper">These details prefill the order form and stay in Supabase, not in the repo.</p>
-                </div>
-              </form>
+        <section class="account-bridge reveal">
+          <div class="card-shell account-bridge-shell">
+            <div>
+              <p class="section-kicker">Account page</p>
+              <h2>Keep home clean. Manage login, profile, history, and support on a separate page.</h2>
             </div>
-          </article>
-
-          <article class="history-card">
-            <div class="card-shell">
-              <div class="section-head">
-                <div>
-                  <p class="section-kicker">Order history</p>
-                  <h2>Track every order and payment state.</h2>
-                </div>
-                <button class="secondary-button" id="refresh-orders" type="button">Refresh</button>
-              </div>
-              <div class="history-list" id="order-history-list">
-                <article class="empty-panel">
-                  <strong>No orders yet</strong>
-                  <p>Sign in and place an order to start building a secure order history timeline.</p>
-                </article>
-              </div>
+            <div class="account-bridge-panel">
+              <a class="primary-button" href="./auth.html">Open account page</a>
+              <p class="helper">
+                Sign in, save shipping details, track orders, and send support requests without crowding the home page.
+              </p>
             </div>
-          </article>
+          </div>
+        </section>
+
+        <section class="spotlight-section reveal" id="spotlight">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Spotlight Rail</p>
+              <h2>Slide through the drop fast.</h2>
+            </div>
+            <p class="helper">Scroll sideways for image-led highlights and quick pop-up access.</p>
+          </div>
+          <div class="spotlight-track" id="spotlight-track" aria-live="polite"></div>
         </section>
 
         <section class="controls reveal" id="collection">
           <div class="controls-copy">
             <p class="section-kicker">Collection</p>
-            <h2>Pick a figure, open its details, and start a structured order.</h2>
+            <h2>Tap a card, open the popup, and order only when you want more.</h2>
           </div>
 
           <div class="toolbar">
@@ -254,71 +191,20 @@
         </section>
 
         <section class="catalog" id="catalog" aria-live="polite"></section>
-
-        <section class="service-grid reveal" id="support">
-          <article class="support-card">
-            <div class="card-shell">
-              <p class="section-kicker">Customer service</p>
-              <h2>Give buyers a clean support path.</h2>
-              <div class="service-list">
-                <article>
-                  <strong>WhatsApp help</strong>
-                  <p id="support-whatsapp">Add your WhatsApp number in <code>supabase-config.js</code>.</p>
-                </article>
-                <article>
-                  <strong>Email support</strong>
-                  <p id="support-email">Add your support email in <code>supabase-config.js</code>.</p>
-                </article>
-                <article>
-                  <strong>Secure handling</strong>
-                  <p>Orders, support messages, and customer details are designed for Supabase with RLS policies.</p>
-                </article>
-              </div>
-            </div>
-          </article>
-
-          <article class="support-card">
-            <div class="card-shell">
-              <p class="section-kicker">Support inbox</p>
-              <h2>Logged-in customers can raise a ticket.</h2>
-              <form class="stack-form" id="support-form">
-                <div class="field-grid">
-                  <label class="field field-wide">
-                    <span>Subject</span>
-                    <input id="support-subject" type="text" name="subject" required />
-                  </label>
-                  <label class="field field-wide">
-                    <span>Order reference (optional)</span>
-                    <input id="support-order-reference" type="text" name="order_reference" />
-                  </label>
-                  <label class="field field-wide">
-                    <span>Message</span>
-                    <textarea id="support-message" name="message" rows="5" required></textarea>
-                  </label>
-                </div>
-                <div class="inline-actions">
-                  <button class="primary-button" id="submit-support" type="submit">Send support request</button>
-                  <p class="helper">Support tickets are stored in Supabase for follow-up and history.</p>
-                </div>
-              </form>
-            </div>
-          </article>
-        </section>
       </main>
 
       <footer class="footer">
         <div class="footer-brand">
           <span class="brand-mark footer-mark">
-            <img src="./assets/yengu-mark.svg" alt="" class="brand-mark-image" />
+            <img src="./assets/yengu-swoop.svg" alt="" class="brand-mark-image" />
           </span>
           <div>
             <p class="section-kicker">Yengu Storefront</p>
-            <strong>Collector-first presentation with clean account-led ordering.</strong>
+            <strong>Collector-first browsing with a cleaner account flow.</strong>
           </div>
         </div>
         <p>
-          Secure static storefront with Supabase-ready commerce flow, structured support,
-          and India-focused checkout.
+          Browse on home. Manage account and support on a separate page. Open details only when you want them.
         </p>
       </footer>
     </div>

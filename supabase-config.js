@@ -4,6 +4,6 @@ window.YENGU_CONFIG = window.YENGU_CONFIG || {
   supabaseUrl: "https://nqnesnbqifhtegxcqpew.supabase.co",
   supabasePublishableKey: "sb_publishable_SVbHBST8PhkSMzTd8-Uokg_Oh1O1YaG",
   razorpayKeyId: "",
-  supportEmail: "",
-  supportWhatsapp: "",
+  supportEmail: "brojendroningthoujam804@gmail.com",
+  supportWhatsapp: "+919863355934",
 };
