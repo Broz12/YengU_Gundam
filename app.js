@@ -323,6 +323,15 @@ const dom = {
   accountStatusPill: document.querySelector("#account-status-pill"),
   profileForm: document.querySelector("#profile-form"),
   saveProfileButton: document.querySelector("#save-profile-button"),
+  emailForm: document.querySelector("#email-form"),
+  accountEmailCurrent: document.querySelector("#account-email-current"),
+  updateEmailButton: document.querySelector("#update-email-button"),
+  passwordForm: document.querySelector("#password-form"),
+  updatePasswordButton: document.querySelector("#update-password-button"),
+  deleteAccountForm: document.querySelector("#delete-account-form"),
+  deleteAccountButton: document.querySelector("#delete-account-button"),
+  securityHelper: document.querySelector("#security-helper"),
+  dangerHelper: document.querySelector("#danger-helper"),
   refreshOrders: document.querySelector("#refresh-orders"),
   orderHistoryList: document.querySelector("#order-history-list"),
   supportEmail: document.querySelector("#support-email"),
@@ -894,6 +903,11 @@ function populateProfileForm() {
   document.querySelector("#profile-pincode").value = seed.pincode;
 }
 
+function populateSecurityForms() {
+  if (!dom.accountEmailCurrent) return;
+  dom.accountEmailCurrent.value = state.session?.user?.email || "";
+}
+
 function populateOrderFormFromProfile() {
   if (
     !document.querySelector("#order-full-name") ||
@@ -959,6 +973,15 @@ function renderAccountHub() {
     if (dom.accountHeadline) dom.accountHeadline.textContent = "Login to unlock your saved account.";
     if (dom.openAuthInline) dom.openAuthInline.textContent = "Sign in / Create account";
     setHidden(dom.profileForm, true);
+    setHidden(dom.emailForm, true);
+    setHidden(dom.passwordForm, true);
+    setHidden(dom.deleteAccountForm, true);
+    if (dom.securityHelper) {
+      dom.securityHelper.textContent = "Sign in to change your email address and password.";
+    }
+    if (dom.dangerHelper) {
+      dom.dangerHelper.textContent = "Sign in before deleting your account. This removes your profile and account access.";
+    }
     setHidden(dom.signOutButton, true);
     return;
   }
@@ -972,8 +995,18 @@ function renderAccountHub() {
   if (dom.accountHeadline) dom.accountHeadline.textContent = "Your saved account details.";
   if (dom.openAuthInline) dom.openAuthInline.textContent = "Manage login";
   setHidden(dom.profileForm, false);
+  setHidden(dom.emailForm, false);
+  setHidden(dom.passwordForm, false);
+  setHidden(dom.deleteAccountForm, false);
+  if (dom.securityHelper) {
+    dom.securityHelper.textContent = "Update your login email and password from this page.";
+  }
+  if (dom.dangerHelper) {
+    dom.dangerHelper.textContent = "Delete your account only if you want to remove access completely.";
+  }
   setHidden(dom.signOutButton, false);
   populateProfileForm();
+  populateSecurityForms();
 }
 
 async function loadProfile() {
@@ -1550,6 +1583,110 @@ async function handleSupportSubmit(event) {
   }
 }
 
+async function handleEmailSubmit(event) {
+  event.preventDefault();
+
+  if (!state.session || !supabaseClient) {
+    setNotice("Sign in first to change your email.", "warn");
+    return;
+  }
+
+  const nextEmail = document.querySelector("#account-email-next").value.trim();
+  if (!nextEmail) {
+    setNotice("Enter a new email address.", "warn");
+    return;
+  }
+
+  try {
+    setButtonBusy(dom.updateEmailButton, true, "Updating...");
+    const { error } = await supabaseClient.auth.updateUser({ email: nextEmail });
+    if (error) throw error;
+
+    document.querySelector("#account-email-next").value = "";
+    setNotice("Email update requested. Check your inbox if confirmation is required.", "success");
+  } catch (error) {
+    setNotice(normaliseError(error), "error");
+  } finally {
+    setButtonBusy(dom.updateEmailButton, false, "Update email", "Update email");
+  }
+}
+
+async function handlePasswordSubmit(event) {
+  event.preventDefault();
+
+  if (!state.session || !supabaseClient) {
+    setNotice("Sign in first to change your password.", "warn");
+    return;
+  }
+
+  const nextPassword = document.querySelector("#account-new-password").value;
+  const confirmPassword = document.querySelector("#account-confirm-password").value;
+
+  if (nextPassword.length < 6) {
+    setNotice("Password must be at least 6 characters.", "warn");
+    return;
+  }
+
+  if (nextPassword !== confirmPassword) {
+    setNotice("Password confirmation does not match.", "warn");
+    return;
+  }
+
+  try {
+    setButtonBusy(dom.updatePasswordButton, true, "Updating...");
+    const { error } = await supabaseClient.auth.updateUser({ password: nextPassword });
+    if (error) throw error;
+
+    dom.passwordForm.reset();
+    setNotice("Password changed successfully.", "success");
+  } catch (error) {
+    setNotice(normaliseError(error), "error");
+  } finally {
+    setButtonBusy(dom.updatePasswordButton, false, "Change password", "Change password");
+  }
+}
+
+async function handleDeleteAccountSubmit(event) {
+  event.preventDefault();
+
+  if (!state.session || !supabaseClient) {
+    setNotice("Sign in first to delete your account.", "warn");
+    return;
+  }
+
+  const confirmation = document.querySelector("#delete-account-confirmation").value.trim();
+  if (confirmation !== "DELETE") {
+    setNotice('Type "DELETE" exactly to confirm account deletion.', "warn");
+    return;
+  }
+
+  try {
+    setButtonBusy(dom.deleteAccountButton, true, "Deleting...");
+    const { data, error } = await supabaseClient.functions.invoke("delete-account", {
+      body: {
+        confirmation,
+      },
+    });
+
+    if (error) throw error;
+    if (!data?.success) {
+      throw new Error("Account deletion failed.");
+    }
+
+    await supabaseClient.auth.signOut();
+    window.location.href = "./index.html";
+  } catch (error) {
+    const message = normaliseError(error);
+    if (message.includes("404")) {
+      setNotice("Account deletion is not available yet on the live backend.", "warn");
+      return;
+    }
+    setNotice(message, "error");
+  } finally {
+    setButtonBusy(dom.deleteAccountButton, false, "Delete account", "Delete account");
+  }
+}
+
 function observeReveal() {
   const nodes = document.querySelectorAll(".reveal");
   if (!nodes.length) return;
@@ -1599,6 +1736,9 @@ function bindEvents() {
     setNotice("Signed out.", "success");
   });
   if (dom.profileForm) dom.profileForm.addEventListener("submit", handleProfileSubmit);
+  if (dom.emailForm) dom.emailForm.addEventListener("submit", handleEmailSubmit);
+  if (dom.passwordForm) dom.passwordForm.addEventListener("submit", handlePasswordSubmit);
+  if (dom.deleteAccountForm) dom.deleteAccountForm.addEventListener("submit", handleDeleteAccountSubmit);
   if (dom.refreshOrders) dom.refreshOrders.addEventListener("click", loadOrderHistory);
   if (dom.supportForm) dom.supportForm.addEventListener("submit", handleSupportSubmit);
 

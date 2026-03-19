@@ -335,6 +335,30 @@ code {
   opacity: 1;
 }
 
+.danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.95rem 1.4rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 149, 133, 0.3);
+  background: linear-gradient(135deg, rgba(255, 149, 133, 0.22), rgba(255, 123, 84, 0.1));
+  color: #ffd8d0;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.danger-button:hover,
+.danger-button:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(255, 149, 133, 0.44);
+}
+
 .hero-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
@@ -1409,6 +1433,13 @@ code {
 
 .footer p {
   margin: 0;
+}
+
+.footer-credit {
+  margin: 0.85rem 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.86rem;
 }
 
 .noscript {

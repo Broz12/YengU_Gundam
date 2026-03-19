@@ -38,6 +38,7 @@
           <div class="topbar-actions">
             <a class="ghost-link" href="./index.html">Home</a>
             <a class="ghost-link" href="./index.html#collection">Collection</a>
+            <a class="ghost-link" href="./auth.html">Account</a>
             <a class="ghost-link" href="#support">Support</a>
           </div>
         </nav>
@@ -159,6 +160,75 @@
           </article>
         </section>
 
+        <section class="service-grid reveal" id="account-settings">
+          <article class="support-card">
+            <div class="card-shell">
+              <p class="section-kicker">Account security</p>
+              <h2>Manage email and password.</h2>
+              <p class="helper" id="security-helper">
+                Sign in to change your email address and password.
+              </p>
+
+              <form class="stack-form hidden" id="email-form">
+                <div class="field-grid">
+                  <label class="field field-wide">
+                    <span>Current email</span>
+                    <input id="account-email-current" type="email" readonly />
+                  </label>
+                  <label class="field field-wide">
+                    <span>New email</span>
+                    <input id="account-email-next" type="email" required />
+                  </label>
+                </div>
+                <div class="inline-actions">
+                  <button class="primary-button" id="update-email-button" type="submit">Update email</button>
+                  <p class="helper">If email confirmation is enabled, Supabase will ask you to confirm the new address.</p>
+                </div>
+              </form>
+
+              <form class="stack-form hidden" id="password-form">
+                <div class="field-grid">
+                  <label class="field">
+                    <span>New password</span>
+                    <input id="account-new-password" type="password" minlength="6" required />
+                  </label>
+                  <label class="field">
+                    <span>Confirm password</span>
+                    <input id="account-confirm-password" type="password" minlength="6" required />
+                  </label>
+                </div>
+                <div class="inline-actions">
+                  <button class="primary-button" id="update-password-button" type="submit">Change password</button>
+                  <p class="helper">Use a strong password you have not used elsewhere.</p>
+                </div>
+              </form>
+            </div>
+          </article>
+
+          <article class="support-card">
+            <div class="card-shell">
+              <p class="section-kicker">Account control</p>
+              <h2>Delete your account when needed.</h2>
+              <p class="helper" id="danger-helper">
+                Sign in before deleting your account. This removes your profile and account access.
+              </p>
+
+              <form class="stack-form hidden" id="delete-account-form">
+                <div class="field-grid">
+                  <label class="field field-wide">
+                    <span>Type DELETE to confirm</span>
+                    <input id="delete-account-confirmation" type="text" autocomplete="off" required />
+                  </label>
+                </div>
+                <div class="inline-actions">
+                  <button class="danger-button" id="delete-account-button" type="submit">Delete account</button>
+                  <p class="helper">This action is permanent and signs you out immediately.</p>
+                </div>
+              </form>
+            </div>
+          </article>
+        </section>
+
         <section class="service-grid reveal" id="support">
           <article class="support-card">
             <div class="card-shell">
@@ -222,6 +292,7 @@
         </div>
         <p>Use the home page for discovery and this page for account work.</p>
       </footer>
+      <p class="footer-credit">Copyright by YengU. Designed and developed by Brojendro Ningthoujam.</p>
     </div>
 
     <dialog id="auth-dialog" class="panel-dialog">
