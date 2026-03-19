@@ -392,6 +392,16 @@ const dateFormatter = new Intl.DateTimeFormat("en-IN", {
 });
 
 const supabaseClient = createSupabaseClient();
+const themeMediaQuery =
+  typeof window.matchMedia === "function"
+    ? window.matchMedia("(prefers-color-scheme: dark)")
+    : null;
+
+const validators = {
+  email: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+  phone: (value) => /^[6-9]\d{9}$/.test(value.replace(/[^\d]/g, "")),
+  pincode: (value) => /^\d{6}$/.test(value.replace(/[^\d]/g, "")),
+};
 
 function createSupabaseClient() {
   if (!window.supabase || !publicConfig.supabaseUrl || !publicConfig.supabaseAnonKey) {
@@ -409,6 +419,196 @@ function createSupabaseClient() {
       },
     },
   );
+}
+
+function setTheme(theme) {
+  if (!document.body) return;
+  document.body.dataset.theme = theme;
+  document.documentElement.style.colorScheme = theme;
+  updateThemeToggle();
+}
+
+function initTheme() {
+  let theme = "dark";
+
+  try {
+    const savedTheme = window.localStorage.getItem("theme");
+    if (savedTheme === "light" || savedTheme === "dark") {
+      theme = savedTheme;
+    } else if (themeMediaQuery && !themeMediaQuery.matches) {
+      theme = "light";
+    }
+  } catch (_error) {
+    if (themeMediaQuery && !themeMediaQuery.matches) {
+      theme = "light";
+    }
+  }
+
+  setTheme(theme);
+}
+
+function updateThemeToggle() {
+  const toggle = document.getElementById("theme-toggle");
+  if (!toggle || !document.body) return;
+
+  const currentTheme = document.body.dataset.theme || "dark";
+  const nextTheme = currentTheme === "dark" ? "light" : "dark";
+  toggle.textContent = currentTheme === "dark" ? "☀️" : "🌙";
+  toggle.setAttribute("aria-label", `Switch to ${nextTheme} mode`);
+}
+
+function toggleTheme() {
+  if (!document.body) return;
+
+  const nextTheme = (document.body.dataset.theme || "dark") === "dark" ? "light" : "dark";
+  setTheme(nextTheme);
+
+  try {
+    window.localStorage.setItem("theme", nextTheme);
+  } catch (_error) {
+    // Ignore storage errors so the toggle still works for the current session.
+  }
+}
+
+function bindThemeToggle() {
+  const toggle = document.getElementById("theme-toggle");
+  if (!toggle || toggle.dataset.bound === "true") return;
+
+  toggle.dataset.bound = "true";
+  toggle.addEventListener("click", toggleTheme);
+}
+
+function getFieldShell(field) {
+  return field?.closest(".field") || null;
+}
+
+function getFieldErrorContainer(field) {
+  const shell = getFieldShell(field);
+  if (!shell) return null;
+
+  let errorNode = shell.querySelector(".error-msg");
+  if (!errorNode) {
+    errorNode = document.createElement("div");
+    errorNode.className = "error-msg hidden";
+    shell.appendChild(errorNode);
+  }
+
+  return errorNode;
+}
+
+function isFieldHidden(field) {
+  const shell = getFieldShell(field);
+
+  return (
+    !field ||
+    field.disabled ||
+    field.type === "hidden" ||
+    field.readOnly ||
+    Boolean(shell?.closest(".hidden"))
+  );
+}
+
+function getFieldError(field) {
+  if (isFieldHidden(field)) return "";
+
+  const value = field.value.trim();
+
+  if (field.required && !value) return "This field is required.";
+  if (!field.required && !value) return "";
+
+  if (field.type === "email" && !validators.email(value)) {
+    return "Enter a valid email address.";
+  }
+
+  if ((field.type === "tel" || field.id.includes("phone")) && !validators.phone(value)) {
+    return "Enter a valid 10-digit phone number.";
+  }
+
+  if (field.id.includes("pincode") && !validators.pincode(value)) {
+    return "Enter a valid 6-digit pincode.";
+  }
+
+  if (field.id === "auth-password" && state.authMode === "signup" && value.length < 6) {
+    return "Password must be at least 6 characters.";
+  }
+
+  if (field.id === "account-new-password" && value.length < 6) {
+    return "Password must be at least 6 characters.";
+  }
+
+  if (field.id === "account-confirm-password") {
+    const nextPassword = document.querySelector("#account-new-password")?.value || "";
+    if (value !== nextPassword) {
+      return "Password confirmation does not match.";
+    }
+  }
+
+  return "";
+}
+
+function validateField(field) {
+  if (!field) return true;
+
+  const error = getFieldError(field);
+  const errorNode = getFieldErrorContainer(field);
+
+  field.classList.toggle("error", Boolean(error));
+
+  if (errorNode) {
+    errorNode.textContent = error;
+    errorNode.classList.toggle("hidden", !error);
+  }
+
+  return !error;
+}
+
+function validateForm(formId) {
+  const form = document.getElementById(formId);
+  if (!form) return true;
+
+  let valid = true;
+  form.querySelectorAll("input, textarea, select").forEach((field) => {
+    if (!validateField(field)) valid = false;
+  });
+
+  return valid;
+}
+
+function ensureValidForm(formId) {
+  const valid = validateForm(formId);
+  if (!valid) {
+    setNotice("Please fix the highlighted fields before continuing.", "warn");
+  }
+  return valid;
+}
+
+function setupValidation(formId) {
+  const form = document.getElementById(formId);
+  if (!form) return;
+
+  form.querySelectorAll("input, textarea, select").forEach((field) => {
+    ["input", "blur", "change"].forEach((eventName) => {
+      field.addEventListener(eventName, () => {
+        validateField(field);
+      });
+    });
+  });
+}
+
+if (themeMediaQuery && typeof themeMediaQuery.addEventListener === "function") {
+  themeMediaQuery.addEventListener("change", (event) => {
+    let hasSavedTheme = false;
+
+    try {
+      hasSavedTheme = Boolean(window.localStorage.getItem("theme"));
+    } catch (_error) {
+      hasSavedTheme = false;
+    }
+
+    if (!hasSavedTheme) {
+      setTheme(event.matches ? "dark" : "light");
+    }
+  });
 }
 
 function toUsd(inrPrice) {
@@ -1149,6 +1349,8 @@ function setAuthMode(mode) {
     mode === "signup"
       ? "Create a secure account with shipping details so checkout is faster."
       : "Use your account to unlock checkout and order history.";
+
+  validateForm("auth-form");
 }
 
 function openAuthDialog() {
@@ -1493,6 +1695,8 @@ async function handleProfileSubmit(event) {
     return;
   }
 
+  if (!ensureValidForm("profile-form")) return;
+
   try {
     setButtonBusy(dom.saveProfileButton, true, "Saving...");
     await upsertProfile(getProfileFormPayload());
@@ -1511,6 +1715,8 @@ async function handleAuthSubmit(event) {
     setNotice(getFeatureUnavailableNotice("Sign in", getSupabaseSetupIssues()), "warn");
     return;
   }
+
+  if (!ensureValidForm("auth-form")) return;
 
   const email = document.querySelector("#auth-email").value.trim();
   const password = document.querySelector("#auth-password").value;
@@ -1591,6 +1797,8 @@ async function handleOrderSubmit(event) {
     return;
   }
 
+  if (!ensureValidForm("order-form")) return;
+
   try {
     const payload = getOrderPayload();
 
@@ -1640,6 +1848,8 @@ async function handleSupportSubmit(event) {
     return;
   }
 
+  if (!ensureValidForm("support-form")) return;
+
   try {
     const payload = {
       user_id: state.session.user.id,
@@ -1668,6 +1878,8 @@ async function handleEmailSubmit(event) {
     return;
   }
 
+  if (!ensureValidForm("email-form")) return;
+
   const nextEmail = document.querySelector("#account-email-next").value.trim();
   if (!nextEmail) {
     setNotice("Enter a new email address.", "warn");
@@ -1695,6 +1907,8 @@ async function handlePasswordSubmit(event) {
     setNotice("Sign in first to change your password.", "warn");
     return;
   }
+
+  if (!ensureValidForm("password-form")) return;
 
   const nextPassword = document.querySelector("#account-new-password").value;
   const confirmPassword = document.querySelector("#account-confirm-password").value;
@@ -1799,6 +2013,17 @@ function bindDialogBackdropClose(dialog, closeHandler) {
 
 function bindEvents() {
   if (dom.searchInput) dom.searchInput.addEventListener("input", renderCatalog);
+  [
+    "auth-form",
+    "profile-form",
+    "order-form",
+    "support-form",
+    "email-form",
+    "password-form",
+    "delete-account-form",
+  ].forEach(setupValidation);
+  bindThemeToggle();
+
   if (dom.accountShortcut && dom.accountShortcut.tagName === "BUTTON") {
     dom.accountShortcut.addEventListener("click", () => {
       const target = document.querySelector("#account-hub");
@@ -1860,6 +2085,7 @@ function setOrderDefaults() {
 }
 
 function init() {
+  initTheme();
   renderStats();
   renderSpotlight();
   renderFilters();

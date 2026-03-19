@@ -24,6 +24,23 @@
   --content: min(1200px, calc(100vw - 2rem));
 }
 
+body[data-theme="light"] {
+  --bg: #eef4f8;
+  --bg-soft: #dfe8f0;
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-strong: rgba(255, 255, 255, 0.96);
+  --panel: rgba(247, 251, 254, 0.9);
+  --card: rgba(255, 255, 255, 0.96);
+  --card-strong: rgba(244, 249, 253, 0.98);
+  --text: #0d1a24;
+  --muted: #556879;
+  --line: rgba(13, 26, 36, 0.1);
+  --line-strong: rgba(13, 26, 36, 0.18);
+  --accent-soft: rgba(105, 212, 255, 0.16);
+  --shadow: 0 30px 80px rgba(15, 36, 52, 0.12);
+  --shadow-soft: 0 18px 46px rgba(15, 36, 52, 0.08);
+}
+
 *,
 *::before,
 *::after {
@@ -48,6 +65,14 @@ body {
   font-family: "Avenir Next", "Trebuchet MS", sans-serif;
 }
 
+body[data-theme="light"] {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 123, 84, 0.14), transparent 22%),
+    radial-gradient(circle at 88% 8%, rgba(105, 212, 255, 0.18), transparent 18%),
+    radial-gradient(circle at 50% 118%, rgba(105, 212, 255, 0.1), transparent 26%),
+    linear-gradient(180deg, #f4f8fb 0%, #e8f0f5 100%);
+}
+
 body::before {
   content: "";
   position: fixed;
@@ -58,6 +83,12 @@ body::before {
   background-size: 48px 48px;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.8), transparent 88%);
   pointer-events: none;
+}
+
+body[data-theme="light"]::before {
+  background-image:
+    linear-gradient(rgba(7, 16, 25, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(7, 16, 25, 0.04) 1px, transparent 1px);
 }
 
 body::after {
@@ -71,6 +102,10 @@ body::after {
   opacity: 0.12;
   filter: saturate(1.05);
   pointer-events: none;
+}
+
+body[data-theme="light"]::after {
+  opacity: 0.08;
 }
 
 img {
@@ -938,6 +973,19 @@ code {
 .field textarea:focus {
   outline: none;
   border-color: rgba(105, 212, 255, 0.42);
+}
+
+.field input.error,
+.field textarea.error {
+  border-color: var(--error);
+  background: rgba(255, 149, 133, 0.08);
+}
+
+.error-msg {
+  color: var(--error);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  min-height: 1.2rem;
 }
 
 .field input[readonly] {
