@@ -944,12 +944,16 @@ code {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1rem;
+  align-items: stretch;
 }
 
 .tool-card {
   display: grid;
+  grid-template-rows: auto auto 1fr;
   align-content: start;
+  justify-items: start;
   gap: 0.55rem;
+  width: 100%;
   min-height: 152px;
   padding: 1.15rem;
   border: 1px solid var(--line);
@@ -957,6 +961,8 @@ code {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 38%),
     rgba(10, 20, 30, 0.9);
+  appearance: none;
+  -webkit-appearance: none;
   color: var(--text);
   text-align: left;
   cursor: pointer;
@@ -978,6 +984,8 @@ code {
 }
 
 .tool-card strong {
+  display: block;
+  width: 100%;
   font-family: "Futura", "Avenir Next Condensed", "Arial Narrow", sans-serif;
   font-size: 1.28rem;
   line-height: 1;
@@ -986,7 +994,11 @@ code {
 }
 
 .tool-card small {
+  display: block;
+  width: 100%;
+  margin: 0;
   color: var(--muted);
+  font-size: 0.92rem;
   line-height: 1.45;
 }
 
@@ -1156,7 +1168,8 @@ code {
 }
 
 .history-list,
-.service-list {
+.service-list,
+.security-list {
   display: grid;
   gap: 0.9rem;
   margin-top: 1.2rem;

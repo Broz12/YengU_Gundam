@@ -314,8 +314,8 @@ const accountFeatureMeta = {
   },
   security: {
     kicker: "Login",
-    title: "Security",
-    copy: "Change email or password.",
+    title: "Manage login",
+    copy: "Email, password, sign out.",
     requiresAuth: true,
   },
   support: {
@@ -365,6 +365,8 @@ const dom = {
   deleteAccountForm: document.querySelector("#delete-account-form"),
   deleteAccountButton: document.querySelector("#delete-account-button"),
   securityHelper: document.querySelector("#security-helper"),
+  securityEmailDisplay: document.querySelector("#security-email-display"),
+  securityStatusCopy: document.querySelector("#security-status-copy"),
   dangerHelper: document.querySelector("#danger-helper"),
   refreshOrders: document.querySelector("#refresh-orders"),
   orderHistoryList: document.querySelector("#order-history-list"),
@@ -1245,6 +1247,13 @@ function setActiveFeatureLauncher(feature) {
   });
 }
 
+function setFeatureHash(feature = "") {
+  if (pageType !== "auth") return;
+  const nextHash = feature ? `#${feature}` : "";
+  const nextUrl = `${window.location.pathname}${window.location.search}${nextHash}`;
+  window.history.replaceState(null, "", nextUrl);
+}
+
 function setFeatureDialogFeature(feature) {
   const meta = accountFeatureMeta[feature] || accountFeatureMeta.profile;
   state.activeAccountFeature = feature;
@@ -1276,6 +1285,7 @@ function openFeatureDialog(feature = "profile") {
   if (!dom.featureDialog || typeof dom.featureDialog.showModal !== "function") return;
 
   setFeatureDialogFeature(feature);
+  setFeatureHash(feature);
   if (!dom.featureDialog.open) {
     dom.featureDialog.showModal();
   }
@@ -1284,6 +1294,7 @@ function openFeatureDialog(feature = "profile") {
 function closeFeatureDialog() {
   if (!dom.featureDialog || typeof dom.featureDialog.close !== "function") return;
   dom.featureDialog.close();
+  setFeatureHash("");
 }
 
 function getFeatureFromHash() {
@@ -1343,6 +1354,12 @@ function renderAccountHub() {
     if (dom.securityHelper) {
       dom.securityHelper.textContent = "Sign in to change your email and password.";
     }
+    if (dom.securityStatusCopy) {
+      dom.securityStatusCopy.textContent = "Guest mode.";
+    }
+    if (dom.securityEmailDisplay) {
+      dom.securityEmailDisplay.textContent = "Sign in first.";
+    }
     if (dom.dangerHelper) {
       dom.dangerHelper.textContent = "Sign in before deleting your account.";
     }
@@ -1365,6 +1382,12 @@ function renderAccountHub() {
   setHidden(dom.deleteAccountForm, false);
   if (dom.securityHelper) {
     dom.securityHelper.textContent = "Update your login email and password.";
+  }
+  if (dom.securityStatusCopy) {
+    dom.securityStatusCopy.textContent = "Signed in.";
+  }
+  if (dom.securityEmailDisplay) {
+    dom.securityEmailDisplay.textContent = state.session.user.email || "Saved";
   }
   if (dom.dangerHelper) {
     dom.dangerHelper.textContent = "Delete your account only if you really want to leave.";
@@ -1450,10 +1473,21 @@ function setAuthMode(mode) {
 }
 
 function openAuthDialog() {
+  if (pageType === "auth" && state.session) {
+    openFeatureDialog("security");
+    return;
+  }
+
   if (!dom.authDialog || typeof dom.authDialog.showModal !== "function") {
     navigateToAccountPage();
     return;
   }
+
+  if (dom.featureDialog?.open) {
+    closeFeatureDialog();
+  }
+
+  if (dom.authDialog.open) return;
   dom.authDialog.showModal();
 }
 
@@ -2125,6 +2159,20 @@ function bindEvents() {
     });
   });
 
+  if (pageType === "auth") {
+    window.addEventListener("hashchange", () => {
+      const feature = getFeatureFromHash();
+      if (feature) {
+        openFeatureDialog(feature);
+        return;
+      }
+
+      if (dom.featureDialog?.open) {
+        closeFeatureDialog();
+      }
+    });
+  }
+
   if (dom.accountShortcut && dom.accountShortcut.tagName === "BUTTON") {
     dom.accountShortcut.addEventListener("click", () => {
       const target = document.querySelector("#account-hub");
@@ -2158,7 +2206,12 @@ function bindEvents() {
 
   if (dom.authClose) dom.authClose.addEventListener("click", closeAuthDialog);
   if (dom.featureClose) dom.featureClose.addEventListener("click", closeFeatureDialog);
-  if (dom.featureAuthButton) dom.featureAuthButton.addEventListener("click", openAuthDialog);
+  if (dom.featureAuthButton) {
+    dom.featureAuthButton.addEventListener("click", () => {
+      closeFeatureDialog();
+      openAuthDialog();
+    });
+  }
   if (dom.authTabs) {
     dom.authTabs.querySelectorAll(".segmented-button").forEach((button) => {
       button.addEventListener("click", () => setAuthMode(button.dataset.mode));
