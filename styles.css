@@ -912,6 +912,144 @@ code {
   margin-top: 1.5rem;
 }
 
+.account-launchpad {
+  display: grid;
+  gap: 1.35rem;
+  margin-top: 1.5rem;
+}
+
+.launchpad-head,
+.feature-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.launchpad-head h2,
+.feature-panel h3 {
+  margin: 0.45rem 0 0;
+  font-family: "Futura", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.launchpad-head h2 {
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+}
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.tool-card {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+  min-height: 152px;
+  padding: 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 38%),
+    rgba(10, 20, 30, 0.9);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.tool-card:hover,
+.tool-card:focus-visible,
+.tool-card.is-active {
+  transform: translateY(-4px);
+  border-color: rgba(105, 212, 255, 0.3);
+  background:
+    linear-gradient(180deg, rgba(105, 212, 255, 0.09), transparent 45%),
+    rgba(10, 20, 30, 0.94);
+}
+
+.tool-card strong {
+  font-family: "Futura", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  font-size: 1.28rem;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.tool-card small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.tool-card-danger:hover,
+.tool-card-danger:focus-visible,
+.tool-card-danger.is-active {
+  border-color: rgba(255, 149, 133, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 149, 133, 0.12), transparent 45%),
+    rgba(20, 12, 15, 0.92);
+}
+
+.compact-signal h3 {
+  min-height: 0;
+}
+
+.compact-status {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.compact-status .summary-title {
+  margin-top: 0.55rem;
+}
+
+.feature-dialog {
+  width: min(980px, calc(100vw - 1rem));
+}
+
+.feature-shell {
+  gap: 1.15rem;
+}
+
+.feature-panel {
+  display: none;
+}
+
+.feature-panel.is-active {
+  display: grid;
+}
+
+.feature-panel-shell {
+  padding: 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 30%),
+    rgba(9, 18, 27, 0.76);
+}
+
+.feature-panel-shell > .helper:first-child {
+  margin-bottom: 0.25rem;
+}
+
+.feature-panel-head {
+  margin-bottom: 1rem;
+}
+
+.feature-stack {
+  display: grid;
+  gap: 1rem;
+}
+
 .card-shell {
   padding: 1.5rem;
 }
@@ -1521,6 +1659,10 @@ code {
     grid-template-columns: 1fr;
   }
 
+  .tool-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .account-bridge-shell {
     flex-direction: column;
     align-items: stretch;
@@ -1540,7 +1682,9 @@ code {
   .toolbar,
   .footer,
   .account-summary,
-  .section-head {
+  .section-head,
+  .launchpad-head,
+  .feature-head {
     flex-direction: column;
     align-items: stretch;
   }
@@ -1556,6 +1700,10 @@ code {
   .field-grid,
   .catalog {
     grid-template-columns: 1fr;
+  }
+
+  .tool-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .hero-gallery,
@@ -1580,6 +1728,12 @@ code {
   .modal-copy,
   .dialog-shell {
     padding-top: 4.8rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .tool-grid {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -30,146 +30,191 @@
               <img src="./assets/yengu-swoop.svg?v=20260319" alt="" class="brand-mark-image" />
             </span>
             <div>
-              <p class="eyebrow">Account Page</p>
+              <p class="eyebrow">Account</p>
               <h1>Yengu</h1>
             </div>
           </div>
 
-<div class="topbar-actions">
+          <div class="topbar-actions">
             <a class="ghost-link" href="./index.html">Home</a>
             <a class="ghost-link" href="./index.html#collection">Collection</a>
             <a class="ghost-link" href="./auth.html">Account</a>
-            <a class="ghost-link" href="#support">Support</a>
+            <button class="ghost-link" data-feature-open="support" type="button">Support</button>
             <button id="theme-toggle" class="ghost-link" type="button" aria-label="Toggle theme">🌙</button>
           </div>
         </nav>
 
         <section class="auth-stage reveal">
           <div class="auth-stage-copy">
-            <p class="section-kicker">Login + Profile</p>
-            <h2>Sign in, save your details, and track every order cleanly.</h2>
-            <p class="hero-text">
-              This page holds your account tools only. Home stays focused on browsing, pictures, and quick product popups.
-            </p>
+            <p class="section-kicker">Account</p>
+            <h2>Tap a tool.</h2>
+            <p class="hero-text">Login, save, track, support.</p>
             <div class="hero-actions">
-              <button class="primary-button" id="open-auth" type="button">Sign in / Create account</button>
-              <a class="secondary-button" href="./index.html#collection">Back to collection</a>
+              <button class="primary-button" id="open-auth" type="button">Sign in</button>
+              <button class="secondary-button" data-feature-open="profile" type="button">Open tools</button>
             </div>
           </div>
 
           <div class="auth-stage-panel">
-            <article class="signal-card">
+            <article class="signal-card compact-signal">
               <p class="panel-label">Status</p>
-              <h3>Account tools in one place</h3>
-              <p>
-                Login, saved address, order history, and support are grouped here so the storefront stays neat.
-              </p>
+              <h3 id="account-headline">Sign in first.</h3>
+              <p id="account-summary-copy">Save details, orders, support.</p>
             </article>
-            <article class="mini-card">
-              <span class="mini-tag">Cleaner flow</span>
-              <strong>Browse first, manage later</strong>
-              <p>Use the home page for products. Use this page for account actions only.</p>
+            <article class="mini-card compact-status">
+              <div>
+                <span class="mini-tag">Now</span>
+                <strong class="summary-title" id="account-name">Guest</strong>
+              </div>
+              <div class="status-row">
+                <span class="status-pill" id="account-status-pill">Guest</span>
+                <button class="ghost-link hidden" id="sign-out-button" type="button">Sign out</button>
+              </div>
             </article>
           </div>
         </section>
       </header>
 
       <main>
-        <section class="commerce-grid reveal" id="account-hub">
-          <article class="account-card">
-            <div class="card-shell">
-              <div class="section-head">
-                <div>
-                  <p class="section-kicker">Account hub</p>
-                  <h2 id="account-headline">Login to unlock your saved account.</h2>
-                </div>
-                <button class="secondary-button" id="open-auth-inline" type="button">Sign in / Create account</button>
-              </div>
-
-              <div class="account-summary" id="account-summary">
-                <div>
-                  <strong class="summary-title" id="account-name">Guest customer</strong>
-                  <p id="account-summary-copy">
-                    Sign in to save your shipping details, track orders, and send support requests.
-                  </p>
-                </div>
-                <div class="status-row">
-                  <span class="status-pill" id="account-status-pill">Not signed in</span>
-                  <button class="ghost-link hidden" id="sign-out-button" type="button">Sign out</button>
-                </div>
-              </div>
-
-              <form class="stack-form hidden" id="profile-form">
-                <div class="field-grid">
-<label class="field">
-                    <span>Full name</span>
-                    <input id="profile-full-name" name="full_name" type="text" required />
-                    <div class="error-msg hidden"></div>
-                  </label>
-                  <label class="field">
-                    <span>Phone</span>
-                    <input id="profile-phone" name="phone" type="tel" inputmode="tel" required />
-                  </label>
-                  <label class="field field-wide">
-                    <span>Email</span>
-                    <input id="profile-email" name="email" type="email" readonly />
-                  </label>
-                  <label class="field field-wide">
-                    <span>Address line 1</span>
-                    <input id="profile-line1" name="line1" type="text" required />
-                  </label>
-                  <label class="field field-wide">
-                    <span>Address line 2</span>
-                    <input id="profile-line2" name="line2" type="text" />
-                  </label>
-                  <label class="field">
-                    <span>City</span>
-                    <input id="profile-city" name="city" type="text" required />
-                  </label>
-                  <label class="field">
-                    <span>State</span>
-                    <input id="profile-state" name="state" type="text" required />
-                  </label>
-                  <label class="field">
-                    <span>Pincode</span>
-                    <input id="profile-pincode" name="pincode" type="text" inputmode="numeric" required />
-                  </label>
-                </div>
-                <div class="inline-actions">
-                  <button class="primary-button" id="save-profile-button" type="submit">Save account details</button>
-                  <p class="helper">Saved details can prefill checkout from the home page.</p>
-                </div>
-              </form>
+        <section class="account-launchpad reveal" id="account-hub">
+          <div class="launchpad-head">
+            <div>
+              <p class="section-kicker">Tools</p>
+              <h2>Open only what you need.</h2>
             </div>
-          </article>
+            <button class="secondary-button" id="open-auth-inline" type="button">Manage login</button>
+          </div>
 
-          <article class="history-card">
-            <div class="card-shell">
-              <div class="section-head">
-                <div>
-                  <p class="section-kicker">Order history</p>
-                  <h2>Track every order without clutter.</h2>
-                </div>
-                <button class="secondary-button" id="refresh-orders" type="button">Refresh</button>
+          <div class="tool-grid">
+            <button class="tool-card" data-feature-open="profile" type="button">
+              <span class="mini-tag">01</span>
+              <strong>Profile</strong>
+              <small>Edit saved details.</small>
+            </button>
+            <button class="tool-card" data-feature-open="orders" type="button">
+              <span class="mini-tag">02</span>
+              <strong>Orders</strong>
+              <small>Track your timeline.</small>
+            </button>
+            <button class="tool-card" data-feature-open="security" type="button">
+              <span class="mini-tag">03</span>
+              <strong>Security</strong>
+              <small>Change email or pass.</small>
+            </button>
+            <button class="tool-card" data-feature-open="support" type="button">
+              <span class="mini-tag">04</span>
+              <strong>Support</strong>
+              <small>Message or contact us.</small>
+            </button>
+            <button class="tool-card tool-card-danger" data-feature-open="delete" type="button">
+              <span class="mini-tag">05</span>
+              <strong>Delete</strong>
+              <small>Remove the account.</small>
+            </button>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <div class="footer-brand">
+          <span class="brand-mark footer-mark">
+            <img src="./assets/yengu-swoop.svg?v=20260319" alt="" class="brand-mark-image" />
+          </span>
+          <div>
+            <p class="section-kicker">Yengu Account</p>
+            <strong>Shortcuts first. Details on tap.</strong>
+          </div>
+        </div>
+        <p>Keep home clean. Use this page when needed.</p>
+      </footer>
+      <p class="footer-credit">Copyright by YengU. Designed and developed by Brojendro Ningthoujam.</p>
+    </div>
+
+    <dialog id="feature-dialog" class="panel-dialog feature-dialog">
+      <button class="modal-close" id="feature-close" aria-label="Close tool window" type="button">
+        Close
+      </button>
+      <div class="dialog-shell feature-shell">
+        <div class="feature-head">
+          <div>
+            <p class="section-kicker" id="feature-kicker">Tool</p>
+            <h2 id="feature-title">Profile</h2>
+            <p class="helper" id="feature-copy">Edit your saved details.</p>
+          </div>
+          <button class="secondary-button hidden" id="feature-auth-button" type="button">Sign in</button>
+        </div>
+
+        <section class="feature-panel" data-feature-panel="profile" id="profile">
+          <div class="feature-panel-shell">
+            <p class="helper">Saved name, phone, and address.</p>
+            <form class="stack-form hidden" id="profile-form">
+              <div class="field-grid">
+                <label class="field">
+                  <span>Full name</span>
+                  <input id="profile-full-name" name="full_name" type="text" required />
+                  <div class="error-msg hidden"></div>
+                </label>
+                <label class="field">
+                  <span>Phone</span>
+                  <input id="profile-phone" name="phone" type="tel" inputmode="tel" required />
+                </label>
+                <label class="field field-wide">
+                  <span>Email</span>
+                  <input id="profile-email" name="email" type="email" readonly />
+                </label>
+                <label class="field field-wide">
+                  <span>Address line 1</span>
+                  <input id="profile-line1" name="line1" type="text" required />
+                </label>
+                <label class="field field-wide">
+                  <span>Address line 2</span>
+                  <input id="profile-line2" name="line2" type="text" />
+                </label>
+                <label class="field">
+                  <span>City</span>
+                  <input id="profile-city" name="city" type="text" required />
+                </label>
+                <label class="field">
+                  <span>State</span>
+                  <input id="profile-state" name="state" type="text" required />
+                </label>
+                <label class="field">
+                  <span>Pincode</span>
+                  <input id="profile-pincode" name="pincode" type="text" inputmode="numeric" required />
+                </label>
               </div>
-              <div class="history-list" id="order-history-list">
-                <article class="empty-panel">
-                  <strong>No orders yet</strong>
-                  <p>Sign in and place an order from the home page to build your timeline here.</p>
-                </article>
+              <div class="inline-actions">
+                <button class="primary-button" id="save-profile-button" type="submit">Save</button>
+                <p class="helper">Used to prefill checkout.</p>
               </div>
-            </div>
-          </article>
+            </form>
+          </div>
         </section>
 
-        <section class="service-grid reveal" id="account-settings">
-          <article class="support-card">
-            <div class="card-shell">
-              <p class="section-kicker">Account security</p>
-              <h2>Manage email and password.</h2>
-              <p class="helper" id="security-helper">
-                Sign in to change your email address and password.
-              </p>
+        <section class="feature-panel" data-feature-panel="orders" id="orders">
+          <div class="feature-panel-shell">
+            <div class="section-head feature-panel-head">
+              <div>
+                <p class="section-kicker">Track</p>
+                <h3>Orders</h3>
+              </div>
+              <button class="secondary-button" id="refresh-orders" type="button">Refresh</button>
+            </div>
+            <div class="history-list" id="order-history-list">
+              <article class="empty-panel">
+                <strong>No orders yet</strong>
+                <p>Sign in and place an order to start your timeline.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="feature-panel" data-feature-panel="security" id="security">
+          <div class="feature-stack">
+            <div class="feature-panel-shell">
+              <p class="section-kicker">Login</p>
+              <h3>Security</h3>
+              <p class="helper" id="security-helper">Sign in to change your email and password.</p>
 
               <form class="stack-form hidden" id="email-form">
                 <div class="field-grid">
@@ -184,10 +229,12 @@
                 </div>
                 <div class="inline-actions">
                   <button class="primary-button" id="update-email-button" type="submit">Update email</button>
-                  <p class="helper">If email confirmation is enabled, Supabase will ask you to confirm the new address.</p>
+                  <p class="helper">Confirm if your inbox asks.</p>
                 </div>
               </form>
+            </div>
 
+            <div class="feature-panel-shell">
               <form class="stack-form hidden" id="password-form">
                 <div class="field-grid">
                   <label class="field">
@@ -201,62 +248,35 @@
                 </div>
                 <div class="inline-actions">
                   <button class="primary-button" id="update-password-button" type="submit">Change password</button>
-                  <p class="helper">Use a strong password you have not used elsewhere.</p>
+                  <p class="helper">Use a strong new password.</p>
                 </div>
               </form>
             </div>
-          </article>
-
-          <article class="support-card">
-            <div class="card-shell">
-              <p class="section-kicker">Account control</p>
-              <h2>Delete your account when needed.</h2>
-              <p class="helper" id="danger-helper">
-                Sign in before deleting your account. This removes your profile and account access.
-              </p>
-
-              <form class="stack-form hidden" id="delete-account-form">
-                <div class="field-grid">
-                  <label class="field field-wide">
-                    <span>Type DELETE to confirm</span>
-                    <input id="delete-account-confirmation" type="text" autocomplete="off" required />
-                  </label>
-                </div>
-                <div class="inline-actions">
-                  <button class="danger-button" id="delete-account-button" type="submit">Delete account</button>
-                  <p class="helper">This action is permanent and signs you out immediately.</p>
-                </div>
-              </form>
-            </div>
-          </article>
+          </div>
         </section>
 
-        <section class="service-grid reveal" id="support">
-          <article class="support-card">
-            <div class="card-shell">
-              <p class="section-kicker">Customer service</p>
-              <h2>Keep support simple and direct.</h2>
+        <section class="feature-panel" data-feature-panel="support" id="support">
+          <div class="feature-stack">
+            <div class="feature-panel-shell">
+              <p class="section-kicker">Help</p>
+              <h3>Support</h3>
               <div class="service-list">
                 <article>
-                  <strong>WhatsApp help</strong>
-                  <p id="support-whatsapp">Add your WhatsApp number in <code>supabase-config.js</code>.</p>
+                  <strong>WhatsApp</strong>
+                  <p id="support-whatsapp">WhatsApp support not set yet.</p>
                 </article>
                 <article>
-                  <strong>Email support</strong>
-                  <p id="support-email">Add your support email in <code>supabase-config.js</code>.</p>
+                  <strong>Email</strong>
+                  <p id="support-email">Email support not set yet.</p>
                 </article>
                 <article>
-                  <strong>Secure handling</strong>
-                  <p>Support requests and account details are designed to stay in Supabase.</p>
+                  <strong>Secure</strong>
+                  <p>Requests stay tied to your account.</p>
                 </article>
               </div>
             </div>
-          </article>
 
-          <article class="support-card">
-            <div class="card-shell">
-              <p class="section-kicker">Support inbox</p>
-              <h2>Send a clean follow-up request.</h2>
+            <div class="feature-panel-shell">
               <form class="stack-form" id="support-form">
                 <div class="field-grid">
                   <label class="field field-wide">
@@ -264,7 +284,7 @@
                     <input id="support-subject" type="text" name="subject" required />
                   </label>
                   <label class="field field-wide">
-                    <span>Order reference (optional)</span>
+                    <span>Order ref</span>
                     <input id="support-order-reference" type="text" name="order_reference" />
                   </label>
                   <label class="field field-wide">
@@ -273,29 +293,36 @@
                   </label>
                 </div>
                 <div class="inline-actions">
-                  <button class="primary-button" id="submit-support" type="submit">Send support request</button>
-                  <p class="helper">Use this page for support instead of loading extra forms on home.</p>
+                  <button class="primary-button" id="submit-support" type="submit">Send</button>
+                  <p class="helper">Keep it short. We reply fast.</p>
                 </div>
               </form>
             </div>
-          </article>
-        </section>
-      </main>
-
-      <footer class="footer">
-        <div class="footer-brand">
-          <span class="brand-mark footer-mark">
-            <img src="./assets/yengu-swoop.svg?v=20260319" alt="" class="brand-mark-image" />
-          </span>
-          <div>
-            <p class="section-kicker">Yengu Account</p>
-            <strong>Profile, history, and support in one cleaner space.</strong>
           </div>
-        </div>
-        <p>Use the home page for discovery and this page for account work.</p>
-      </footer>
-      <p class="footer-credit">Copyright by YengU. Designed and developed by Brojendro Ningthoujam.</p>
-    </div>
+        </section>
+
+        <section class="feature-panel" data-feature-panel="delete" id="delete">
+          <div class="feature-panel-shell">
+            <p class="section-kicker">Control</p>
+            <h3>Delete account</h3>
+            <p class="helper" id="danger-helper">Sign in before deleting your account.</p>
+
+            <form class="stack-form hidden" id="delete-account-form">
+              <div class="field-grid">
+                <label class="field field-wide">
+                  <span>Type DELETE</span>
+                  <input id="delete-account-confirmation" type="text" autocomplete="off" required />
+                </label>
+              </div>
+              <div class="inline-actions">
+                <button class="danger-button" id="delete-account-button" type="submit">Delete account</button>
+                <p class="helper">This is permanent.</p>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </dialog>
 
     <dialog id="auth-dialog" class="panel-dialog">
       <button class="modal-close" id="auth-close" aria-label="Close account dialog" type="button">
@@ -305,7 +332,7 @@
         <div class="section-head">
           <div>
             <p class="section-kicker">Account access</p>
-            <h2>Sign in or create an account.</h2>
+            <h2>Sign in or create.</h2>
           </div>
         </div>
 
@@ -320,16 +347,16 @@
               <span>Full name</span>
               <input id="auth-full-name" type="text" name="full_name" />
             </label>
-<label class="field field-wide">
-                    <span>Email</span>
-                    <input id="auth-email" type="email" name="email" required />
-                    <div class="error-msg hidden"></div>
-                  </label>
-<label class="field">
-                    <span>Password</span>
-                    <input id="auth-password" type="password" name="password" minlength="6" required />
-                    <div class="error-msg hidden"></div>
-                  </label>
+            <label class="field field-wide">
+              <span>Email</span>
+              <input id="auth-email" type="email" name="email" required />
+              <div class="error-msg hidden"></div>
+            </label>
+            <label class="field">
+              <span>Password</span>
+              <input id="auth-password" type="password" name="password" minlength="6" required />
+              <div class="error-msg hidden"></div>
+            </label>
             <label class="field auth-signup-only hidden">
               <span>Phone</span>
               <input id="auth-phone" type="tel" name="phone" inputmode="tel" />

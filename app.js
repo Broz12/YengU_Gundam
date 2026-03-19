@@ -294,8 +294,42 @@ const state = {
   session: null,
   profile: null,
   authMode: "signin",
+  activeAccountFeature: "profile",
   pendingOrderProduct: null,
   commerceReady: false,
+};
+
+const accountFeatureMeta = {
+  profile: {
+    kicker: "Saved",
+    title: "Profile",
+    copy: "Edit your saved details.",
+    requiresAuth: true,
+  },
+  orders: {
+    kicker: "Track",
+    title: "Orders",
+    copy: "View your order timeline.",
+    requiresAuth: true,
+  },
+  security: {
+    kicker: "Login",
+    title: "Security",
+    copy: "Change email or password.",
+    requiresAuth: true,
+  },
+  support: {
+    kicker: "Help",
+    title: "Support",
+    copy: "Open contact links or send a request.",
+    requiresAuth: true,
+  },
+  delete: {
+    kicker: "Control",
+    title: "Delete",
+    copy: "Remove the account if needed.",
+    requiresAuth: true,
+  },
 };
 
 const dom = {
@@ -353,6 +387,13 @@ const dom = {
   authForm: document.querySelector("#auth-form"),
   authSubmit: document.querySelector("#auth-submit"),
   authHelper: document.querySelector("#auth-helper"),
+  featureDialog: document.querySelector("#feature-dialog"),
+  featureClose: document.querySelector("#feature-close"),
+  featureKicker: document.querySelector("#feature-kicker"),
+  featureTitle: document.querySelector("#feature-title"),
+  featureCopy: document.querySelector("#feature-copy"),
+  featureAuthButton: document.querySelector("#feature-auth-button"),
+  featurePanels: document.querySelectorAll("[data-feature-panel]"),
   orderDialog: document.querySelector("#order-dialog"),
   orderClose: document.querySelector("#order-close"),
   orderForm: document.querySelector("#order-form"),
@@ -1112,7 +1153,7 @@ function updateSupportChannels() {
       dom.supportEmail,
       publicConfig.supportEmail ? `mailto:${publicConfig.supportEmail}` : "",
       publicConfig.supportEmail,
-      "Add your support email in supabase-config.js.",
+      "Email support not set yet.",
     );
   }
   if (dom.supportWhatsapp) {
@@ -1121,7 +1162,7 @@ function updateSupportChannels() {
       dom.supportWhatsapp,
       whatsappDigits ? `https://wa.me/${whatsappDigits}` : "",
       publicConfig.supportWhatsapp,
-      "Add your WhatsApp number in supabase-config.js.",
+      "WhatsApp support not set yet.",
     );
   }
 }
@@ -1198,6 +1239,59 @@ function populateOrderFormFromProfile() {
   document.querySelector("#order-pincode").value = seed.pincode;
 }
 
+function setActiveFeatureLauncher(feature) {
+  document.querySelectorAll("[data-feature-open]").forEach((node) => {
+    node.classList.toggle("is-active", node.dataset.featureOpen === feature);
+  });
+}
+
+function setFeatureDialogFeature(feature) {
+  const meta = accountFeatureMeta[feature] || accountFeatureMeta.profile;
+  state.activeAccountFeature = feature;
+
+  if (dom.featureKicker) dom.featureKicker.textContent = meta.kicker;
+  if (dom.featureTitle) dom.featureTitle.textContent = meta.title;
+  if (dom.featureCopy) dom.featureCopy.textContent = meta.copy;
+  if (dom.featureAuthButton) {
+    setHidden(dom.featureAuthButton, state.session || !meta.requiresAuth);
+  }
+  if (dom.refreshOrders) {
+    setHidden(dom.refreshOrders, feature !== "orders" || !state.session);
+  }
+
+  dom.featurePanels.forEach((panel) => {
+    const active = panel.dataset.featurePanel === feature;
+    panel.classList.toggle("is-active", active);
+    setHidden(panel, !active);
+  });
+
+  setActiveFeatureLauncher(feature);
+
+  if (feature === "orders") {
+    loadOrderHistory();
+  }
+}
+
+function openFeatureDialog(feature = "profile") {
+  if (!dom.featureDialog || typeof dom.featureDialog.showModal !== "function") return;
+
+  setFeatureDialogFeature(feature);
+  if (!dom.featureDialog.open) {
+    dom.featureDialog.showModal();
+  }
+}
+
+function closeFeatureDialog() {
+  if (!dom.featureDialog || typeof dom.featureDialog.close !== "function") return;
+  dom.featureDialog.close();
+}
+
+function getFeatureFromHash() {
+  const hash = window.location.hash.replace("#", "").trim().toLowerCase();
+  if (!hash) return "";
+  return accountFeatureMeta[hash] ? hash : "";
+}
+
 function renderAccountHub() {
   if (dom.accountShortcut) {
     dom.accountShortcut.textContent = state.session ? "My account" : "Account";
@@ -1237,46 +1331,48 @@ function renderAccountHub() {
   if (!state.session) {
     dom.accountStatusPill.textContent = "Not signed in";
     dom.accountStatusPill.className = "status-pill";
-    dom.accountName.textContent = "Guest customer";
-    dom.accountSummaryCopy.textContent =
-      "Sign in to unlock checkout, order history, support tickets, and saved address details.";
-    if (dom.accountHeadline) dom.accountHeadline.textContent = "Login to unlock your saved account.";
-    if (dom.openAuthInline) dom.openAuthInline.textContent = "Sign in / Create account";
+    dom.accountName.textContent = "Guest";
+    dom.accountSummaryCopy.textContent = "Save details, orders, support.";
+    if (dom.accountHeadline) dom.accountHeadline.textContent = "Sign in first.";
+    if (dom.openAuth) dom.openAuth.textContent = "Sign in";
+    if (dom.openAuthInline) dom.openAuthInline.textContent = "Sign in";
     setHidden(dom.profileForm, true);
     setHidden(dom.emailForm, true);
     setHidden(dom.passwordForm, true);
     setHidden(dom.deleteAccountForm, true);
     if (dom.securityHelper) {
-      dom.securityHelper.textContent = "Sign in to change your email address and password.";
+      dom.securityHelper.textContent = "Sign in to change your email and password.";
     }
     if (dom.dangerHelper) {
-      dom.dangerHelper.textContent = "Sign in before deleting your account. This removes your profile and account access.";
+      dom.dangerHelper.textContent = "Sign in before deleting your account.";
     }
     setHidden(dom.signOutButton, true);
+    setFeatureDialogFeature(state.activeAccountFeature);
     return;
   }
 
   const seed = getProfileSeed();
-  dom.accountStatusPill.textContent = "Ready to order";
+  dom.accountStatusPill.textContent = "Ready";
   dom.accountStatusPill.className = "status-pill status-pill-success";
   dom.accountName.textContent = seed.full_name || state.session.user.email;
-  dom.accountSummaryCopy.textContent =
-    "Your account details are saved and can prefill checkout, order history, and support requests.";
-  if (dom.accountHeadline) dom.accountHeadline.textContent = "Your saved account details.";
+  dom.accountSummaryCopy.textContent = "Saved details and tools are ready.";
+  if (dom.accountHeadline) dom.accountHeadline.textContent = "Account ready.";
+  if (dom.openAuth) dom.openAuth.textContent = "Manage login";
   if (dom.openAuthInline) dom.openAuthInline.textContent = "Manage login";
   setHidden(dom.profileForm, false);
   setHidden(dom.emailForm, false);
   setHidden(dom.passwordForm, false);
   setHidden(dom.deleteAccountForm, false);
   if (dom.securityHelper) {
-    dom.securityHelper.textContent = "Update your login email and password from this page.";
+    dom.securityHelper.textContent = "Update your login email and password.";
   }
   if (dom.dangerHelper) {
-    dom.dangerHelper.textContent = "Delete your account only if you want to remove access completely.";
+    dom.dangerHelper.textContent = "Delete your account only if you really want to leave.";
   }
   setHidden(dom.signOutButton, false);
   populateProfileForm();
   populateSecurityForms();
+  setFeatureDialogFeature(state.activeAccountFeature);
 }
 
 async function loadProfile() {
@@ -2023,6 +2119,11 @@ function bindEvents() {
     "delete-account-form",
   ].forEach(setupValidation);
   bindThemeToggle();
+  document.querySelectorAll("[data-feature-open]").forEach((node) => {
+    node.addEventListener("click", () => {
+      openFeatureDialog(node.dataset.featureOpen || "profile");
+    });
+  });
 
   if (dom.accountShortcut && dom.accountShortcut.tagName === "BUTTON") {
     dom.accountShortcut.addEventListener("click", () => {
@@ -2056,6 +2157,8 @@ function bindEvents() {
   });
 
   if (dom.authClose) dom.authClose.addEventListener("click", closeAuthDialog);
+  if (dom.featureClose) dom.featureClose.addEventListener("click", closeFeatureDialog);
+  if (dom.featureAuthButton) dom.featureAuthButton.addEventListener("click", openAuthDialog);
   if (dom.authTabs) {
     dom.authTabs.querySelectorAll(".segmented-button").forEach((button) => {
       button.addEventListener("click", () => setAuthMode(button.dataset.mode));
@@ -2073,6 +2176,7 @@ function bindEvents() {
   });
 
   bindDialogBackdropClose(dom.productModal, closeProductModal);
+  bindDialogBackdropClose(dom.featureDialog, closeFeatureDialog);
   bindDialogBackdropClose(dom.authDialog, closeAuthDialog);
   bindDialogBackdropClose(dom.orderDialog, closeOrderDialog);
 }
@@ -2098,6 +2202,13 @@ function init() {
   bindEvents();
   observeReveal();
   initAuth();
+  if (pageType === "auth") {
+    setFeatureDialogFeature(getFeatureFromHash() || "profile");
+    const initialFeature = getFeatureFromHash();
+    if (initialFeature) {
+      openFeatureDialog(initialFeature);
+    }
+  }
 }
 
 init();
