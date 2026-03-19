@@ -563,7 +563,77 @@ function setButtonBusy(button, busy, busyLabel, idleLabel) {
 function normaliseError(error) {
   if (!error) return "Something went wrong.";
   if (typeof error === "string") return error;
-  return error.message || "Something went wrong.";
+  const message = error.message || "Something went wrong.";
+
+  if (/email not confirmed/i.test(message)) {
+    return "Check your email inbox and confirm your account before signing in.";
+  }
+
+  if (/invalid login credentials/i.test(message)) {
+    return "Email or password is incorrect. If you just created the account, confirm your email from your inbox first.";
+  }
+
+  if (/redirect_to.*not allowed|invalid redirect url/i.test(message)) {
+    return "Email confirmation could not finish because the current redirect URL is not allowed in Supabase Auth settings.";
+  }
+
+  return message;
+}
+
+function getAuthRedirectUrl() {
+  return new URL("./auth.html", window.location.href).toString();
+}
+
+function clearAuthCallbackUrl() {
+  const url = new URL(window.location.href);
+  ["code", "type", "token_hash", "error", "error_code", "error_description"].forEach((key) => {
+    url.searchParams.delete(key);
+  });
+  url.hash = "";
+  window.history.replaceState({}, document.title, `${url.pathname}${url.search}`);
+}
+
+async function recoverAuthSessionFromUrl() {
+  if (!supabaseClient) return;
+
+  const url = new URL(window.location.href);
+  const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+  const errorMessage =
+    url.searchParams.get("error_description") ||
+    hashParams.get("error_description") ||
+    url.searchParams.get("error");
+
+  if (errorMessage) {
+    setNotice(decodeURIComponent(errorMessage.replaceAll("+", " ")), "warn");
+  }
+
+  const code = url.searchParams.get("code");
+  if (code) {
+    const { error } = await supabaseClient.auth.exchangeCodeForSession(code);
+    if (error) throw error;
+    clearAuthCallbackUrl();
+    setNotice("Email confirmed. You're signed in.", "success");
+    return;
+  }
+
+  const tokenHash = url.searchParams.get("token_hash");
+  const type = url.searchParams.get("type");
+  if (tokenHash && type) {
+    const { error } = await supabaseClient.auth.verifyOtp({
+      token_hash: tokenHash,
+      type,
+    });
+
+    if (error) throw error;
+
+    clearAuthCallbackUrl();
+    setNotice(
+      type === "recovery"
+        ? "Password recovery verified. You can now set a new password."
+        : "Email confirmed. You're signed in.",
+      "success",
+    );
+  }
 }
 
 function getInquiryText(product) {
@@ -1379,6 +1449,12 @@ async function initAuth() {
     return;
   }
 
+  try {
+    await recoverAuthSessionFromUrl();
+  } catch (error) {
+    setNotice(normaliseError(error), "warn");
+  }
+
   const {
     data: { session },
   } = await supabaseClient.auth.getSession();
@@ -1465,6 +1541,7 @@ async function handleAuthSubmit(event) {
       password,
       options: {
         data: metadata,
+        emailRedirectTo: getAuthRedirectUrl(),
       },
     });
 
