@@ -24,4 +24,6 @@ inspect/
 thumbs/
 .env
 .env.*
+!supabase/.env.example
+!supabase/.env.functions.example
 supabase/.temp/
