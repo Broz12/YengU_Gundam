@@ -1,22 +1,5 @@
 <svg width="320" height="320" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path
-    d="M35 112C79 35 140 36 183 177"
-    stroke="#F8FBFC"
-    stroke-linecap="round"
-    stroke-width="82"
-  />
-  <path
-    d="M174 182C215 92 261 40 305 34"
-    stroke="#F8FBFC"
-    stroke-linecap="round"
-    stroke-width="82"
-  />
-  <path
-    d="M109 261C178 235 238 172 301 58"
-    stroke="#F8FBFC"
-    stroke-linecap="round"
-    stroke-width="94"
-  />
+  <rect width="320" height="320" rx="72" fill="#F6FAFB" />
   <path
     d="M35 112C79 35 140 36 183 177"
     stroke="#202B47"

@@ -1,0 +1,17 @@
+{
+  "name": "Yengu",
+  "short_name": "Yengu",
+  "description": "Collector-first Gundam storefront with secure checkout and account history.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#071019",
+  "theme_color": "#071019",
+  "icons": [
+    {
+      "src": "./favicon.svg?v=20260319",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

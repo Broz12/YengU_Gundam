@@ -30,6 +30,41 @@ function getOptionalEnv(name: string) {
   return Deno.env.get(name)?.trim() || "";
 }
 
+function escapeHtml(value: unknown) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function getNestedMessageId(body: unknown) {
+  if (!isRecord(body)) return null;
+
+  const messages = body.messages;
+  if (!Array.isArray(messages) || !messages.length || !isRecord(messages[0])) {
+    return null;
+  }
+
+  const messageId = messages[0].id;
+  return typeof messageId === "string" && messageId.trim() ? messageId.trim() : null;
+}
+
+function getJsonId(body: unknown) {
+  if (!isRecord(body)) return null;
+  const id = body.id;
+  return typeof id === "string" && id.trim() ? id.trim() : null;
+}
+
+function formatErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unexpected notification error.";
+}
+
 function requireText(value: unknown, label: string) {
   if (typeof value !== "string" || !value.trim()) {
     throw new Error(`${label} is required.`);
@@ -62,16 +97,16 @@ function buildOwnerEmailHtml(orderRow: Record<string, unknown>, receiptNumber: s
   return `
     <div style="font-family:Arial,sans-serif;color:#0b1720;line-height:1.6">
       <h2 style="margin-bottom:8px;">New paid order received</h2>
-      <p><strong>Receipt:</strong> ${receiptNumber}</p>
-      <p><strong>Product:</strong> ${orderRow.product_title}</p>
-      <p><strong>Total:</strong> Rs ${orderRow.total_price_inr}</p>
-      <p><strong>Customer:</strong> ${orderRow.shipping_name}</p>
-      <p><strong>Email:</strong> ${orderRow.shipping_email}</p>
-      <p><strong>Phone:</strong> ${orderRow.shipping_phone}</p>
-      <p><strong>Delivery date:</strong> ${orderRow.delivery_date}</p>
-      <p><strong>Address:</strong> ${orderRow.shipping_line1}${orderRow.shipping_line2 ? `, ${orderRow.shipping_line2}` : ""}, ${orderRow.shipping_city}, ${orderRow.shipping_state} ${orderRow.shipping_pincode}</p>
+      <p><strong>Receipt:</strong> ${escapeHtml(receiptNumber)}</p>
+      <p><strong>Product:</strong> ${escapeHtml(orderRow.product_title)}</p>
+      <p><strong>Total:</strong> Rs ${escapeHtml(orderRow.total_price_inr)}</p>
+      <p><strong>Customer:</strong> ${escapeHtml(orderRow.shipping_name)}</p>
+      <p><strong>Email:</strong> ${escapeHtml(orderRow.shipping_email)}</p>
+      <p><strong>Phone:</strong> ${escapeHtml(orderRow.shipping_phone)}</p>
+      <p><strong>Delivery date:</strong> ${escapeHtml(orderRow.delivery_date)}</p>
+      <p><strong>Address:</strong> ${escapeHtml(orderRow.shipping_line1)}${orderRow.shipping_line2 ? `, ${escapeHtml(orderRow.shipping_line2)}` : ""}, ${escapeHtml(orderRow.shipping_city)}, ${escapeHtml(orderRow.shipping_state)} ${escapeHtml(orderRow.shipping_pincode)}</p>
       <p><strong>Customization:</strong> ${orderRow.customization_requested ? "Yes" : "No"}</p>
-      <p><strong>Order notes:</strong> ${orderRow.order_notes || "None"}</p>
+      <p><strong>Order notes:</strong> ${escapeHtml(orderRow.order_notes || "None")}</p>
     </div>
   `;
 }
@@ -86,12 +121,12 @@ function buildCustomerReceiptHtml(
     <div style="font-family:Arial,sans-serif;color:#0b1720;line-height:1.6">
       <h2 style="margin-bottom:8px;">Your Yengu order receipt</h2>
       <p>Thank you for your order. Your payment has been confirmed.</p>
-      <p><strong>Receipt:</strong> ${receiptNumber}</p>
-      <p><strong>Product:</strong> ${orderRow.product_title}</p>
-      <p><strong>Total paid:</strong> Rs ${orderRow.total_price_inr}</p>
-      <p><strong>Delivery date:</strong> ${orderRow.delivery_date}</p>
+      <p><strong>Receipt:</strong> ${escapeHtml(receiptNumber)}</p>
+      <p><strong>Product:</strong> ${escapeHtml(orderRow.product_title)}</p>
+      <p><strong>Total paid:</strong> Rs ${escapeHtml(orderRow.total_price_inr)}</p>
+      <p><strong>Delivery date:</strong> ${escapeHtml(orderRow.delivery_date)}</p>
       <p><strong>Customization:</strong> ${orderRow.customization_requested ? "Yes" : "No"}</p>
-      <p>If you need help, contact us at ${ownerEmail || "our support email"}${ownerWhatsapp ? ` or WhatsApp ${ownerWhatsapp}` : ""}.</p>
+      <p>If you need help, contact us at ${escapeHtml(ownerEmail || "our support email")}${ownerWhatsapp ? ` or WhatsApp ${escapeHtml(ownerWhatsapp)}` : ""}.</p>
     </div>
   `;
 }
@@ -184,7 +219,10 @@ async function recordDelivery(
     sent_at?: string | null;
   },
 ) {
-  await serviceClient.from("notification_deliveries").insert(payload);
+  const { error } = await serviceClient.from("notification_deliveries").insert(payload);
+  if (error) {
+    console.error("Failed to record notification delivery", error.message, payload.channel, payload.recipient);
+  }
 }
 
 Deno.serve(async (request) => {
@@ -328,15 +366,42 @@ Deno.serve(async (request) => {
     const ownerWhatsappText = buildOwnerWhatsappText(orderRow, receiptNumber);
 
     if (ownerNotificationEmail) {
-      if (resendApiKey && emailFrom) {
-        const result = await sendResendEmail(
-          resendApiKey,
-          emailFrom,
-          ownerNotificationEmail,
-          `New paid order | ${receiptNumber}`,
-          ownerEmailHtml,
-        );
+      try {
+        if (resendApiKey && emailFrom) {
+          const result = await sendResendEmail(
+            resendApiKey,
+            emailFrom,
+            ownerNotificationEmail,
+            `New paid order | ${receiptNumber}`,
+            ownerEmailHtml,
+          );
 
+          await recordDelivery(serviceClient, {
+            order_id: checkoutOrderId,
+            receipt_id: receiptRow.id,
+            user_id: user.id,
+            channel: "owner_email",
+            recipient: ownerNotificationEmail,
+            provider: "resend",
+            status: result.ok ? "sent" : "failed",
+            provider_message_id: result.ok ? getJsonId(result.body) : null,
+            response_body: result.body,
+            error_message: result.ok ? null : `Resend returned ${result.status}`,
+            sent_at: result.ok ? new Date().toISOString() : null,
+          });
+        } else {
+          await recordDelivery(serviceClient, {
+            order_id: checkoutOrderId,
+            receipt_id: receiptRow.id,
+            user_id: user.id,
+            channel: "owner_email",
+            recipient: ownerNotificationEmail,
+            provider: "resend",
+            status: "skipped",
+            error_message: "Missing RESEND_API_KEY or EMAIL_FROM.",
+          });
+        }
+      } catch (error) {
         await recordDelivery(serviceClient, {
           order_id: checkoutOrderId,
           receipt_id: receiptRow.id,
@@ -344,35 +409,48 @@ Deno.serve(async (request) => {
           channel: "owner_email",
           recipient: ownerNotificationEmail,
           provider: "resend",
-          status: result.ok ? "sent" : "failed",
-          provider_message_id: result.ok ? result.body?.id ?? null : null,
-          response_body: result.body,
-          error_message: result.ok ? null : `Resend returned ${result.status}`,
-          sent_at: result.ok ? new Date().toISOString() : null,
-        });
-      } else {
-        await recordDelivery(serviceClient, {
-          order_id: checkoutOrderId,
-          receipt_id: receiptRow.id,
-          user_id: user.id,
-          channel: "owner_email",
-          recipient: ownerNotificationEmail,
-          provider: "resend",
-          status: "skipped",
-          error_message: "Missing RESEND_API_KEY or EMAIL_FROM.",
+          status: "failed",
+          error_message: formatErrorMessage(error),
         });
       }
     }
 
     if (ownerNotificationWhatsapp) {
-      if (whatsappAccessToken && whatsappPhoneNumberId) {
-        const result = await sendWhatsappMessage(
-          whatsappAccessToken,
-          whatsappPhoneNumberId,
-          normalisePhone(ownerNotificationWhatsapp),
-          ownerWhatsappText,
-        );
+      try {
+        if (whatsappAccessToken && whatsappPhoneNumberId) {
+          const result = await sendWhatsappMessage(
+            whatsappAccessToken,
+            whatsappPhoneNumberId,
+            normalisePhone(ownerNotificationWhatsapp),
+            ownerWhatsappText,
+          );
 
+          await recordDelivery(serviceClient, {
+            order_id: checkoutOrderId,
+            receipt_id: receiptRow.id,
+            user_id: user.id,
+            channel: "owner_whatsapp",
+            recipient: ownerNotificationWhatsapp,
+            provider: "whatsapp_cloud",
+            status: result.ok ? "sent" : "failed",
+            provider_message_id: result.ok ? getNestedMessageId(result.body) : null,
+            response_body: result.body,
+            error_message: result.ok ? null : `WhatsApp returned ${result.status}`,
+            sent_at: result.ok ? new Date().toISOString() : null,
+          });
+        } else {
+          await recordDelivery(serviceClient, {
+            order_id: checkoutOrderId,
+            receipt_id: receiptRow.id,
+            user_id: user.id,
+            channel: "owner_whatsapp",
+            recipient: ownerNotificationWhatsapp,
+            provider: "whatsapp_cloud",
+            status: "skipped",
+            error_message: "Missing WHATSAPP_ACCESS_TOKEN or WHATSAPP_PHONE_NUMBER_ID.",
+          });
+        }
+      } catch (error) {
         await recordDelivery(serviceClient, {
           order_id: checkoutOrderId,
           receipt_id: receiptRow.id,
@@ -380,36 +458,49 @@ Deno.serve(async (request) => {
           channel: "owner_whatsapp",
           recipient: ownerNotificationWhatsapp,
           provider: "whatsapp_cloud",
-          status: result.ok ? "sent" : "failed",
-          provider_message_id: result.ok ? result.body?.messages?.[0]?.id ?? null : null,
-          response_body: result.body,
-          error_message: result.ok ? null : `WhatsApp returned ${result.status}`,
-          sent_at: result.ok ? new Date().toISOString() : null,
-        });
-      } else {
-        await recordDelivery(serviceClient, {
-          order_id: checkoutOrderId,
-          receipt_id: receiptRow.id,
-          user_id: user.id,
-          channel: "owner_whatsapp",
-          recipient: ownerNotificationWhatsapp,
-          provider: "whatsapp_cloud",
-          status: "skipped",
-          error_message: "Missing WHATSAPP_ACCESS_TOKEN or WHATSAPP_PHONE_NUMBER_ID.",
+          status: "failed",
+          error_message: formatErrorMessage(error),
         });
       }
     }
 
     if (orderRow.shipping_email) {
-      if (resendApiKey && emailFrom) {
-        const result = await sendResendEmail(
-          resendApiKey,
-          emailFrom,
-          orderRow.shipping_email,
-          `Your Yengu receipt | ${receiptNumber}`,
-          customerReceiptHtml,
-        );
+      try {
+        if (resendApiKey && emailFrom) {
+          const result = await sendResendEmail(
+            resendApiKey,
+            emailFrom,
+            orderRow.shipping_email,
+            `Your Yengu receipt | ${receiptNumber}`,
+            customerReceiptHtml,
+          );
 
+          await recordDelivery(serviceClient, {
+            order_id: checkoutOrderId,
+            receipt_id: receiptRow.id,
+            user_id: user.id,
+            channel: "customer_receipt_email",
+            recipient: orderRow.shipping_email,
+            provider: "resend",
+            status: result.ok ? "sent" : "failed",
+            provider_message_id: result.ok ? getJsonId(result.body) : null,
+            response_body: result.body,
+            error_message: result.ok ? null : `Resend returned ${result.status}`,
+            sent_at: result.ok ? new Date().toISOString() : null,
+          });
+        } else {
+          await recordDelivery(serviceClient, {
+            order_id: checkoutOrderId,
+            receipt_id: receiptRow.id,
+            user_id: user.id,
+            channel: "customer_receipt_email",
+            recipient: orderRow.shipping_email,
+            provider: "resend",
+            status: "skipped",
+            error_message: "Missing RESEND_API_KEY or EMAIL_FROM.",
+          });
+        }
+      } catch (error) {
         await recordDelivery(serviceClient, {
           order_id: checkoutOrderId,
           receipt_id: receiptRow.id,
@@ -417,22 +508,8 @@ Deno.serve(async (request) => {
           channel: "customer_receipt_email",
           recipient: orderRow.shipping_email,
           provider: "resend",
-          status: result.ok ? "sent" : "failed",
-          provider_message_id: result.ok ? result.body?.id ?? null : null,
-          response_body: result.body,
-          error_message: result.ok ? null : `Resend returned ${result.status}`,
-          sent_at: result.ok ? new Date().toISOString() : null,
-        });
-      } else {
-        await recordDelivery(serviceClient, {
-          order_id: checkoutOrderId,
-          receipt_id: receiptRow.id,
-          user_id: user.id,
-          channel: "customer_receipt_email",
-          recipient: orderRow.shipping_email,
-          provider: "resend",
-          status: "skipped",
-          error_message: "Missing RESEND_API_KEY or EMAIL_FROM.",
+          status: "failed",
+          error_message: formatErrorMessage(error),
         });
       }
     }

@@ -285,6 +285,7 @@ const productMap = new Map(products.map((product) => [product.code, product]));
 const featuredProducts = products.filter((product) => product.tags.includes("featured")).length
   ? products.filter((product) => product.tags.includes("featured"))
   : products.slice(0, 6);
+const pageType = document.body?.dataset?.page || "home";
 
 const state = {
   activeFilter: "all",
@@ -506,6 +507,28 @@ function getFeatureUnavailableNotice(featureLabel, issues) {
 function setHidden(node, hidden) {
   if (!node) return;
   node.classList.toggle("hidden", hidden);
+}
+
+function setContactLink(node, href, label, fallback) {
+  if (!node) return;
+  node.textContent = "";
+
+  if (!href || !label) {
+    node.textContent = fallback;
+    return;
+  }
+
+  const link = document.createElement("a");
+  link.href = href;
+  link.textContent = label;
+  link.className = "inline-link";
+
+  if (href.startsWith("http")) {
+    link.target = "_blank";
+    link.rel = "noreferrer";
+  }
+
+  node.appendChild(link);
 }
 
 function setNotice(message, tone = "info") {
@@ -801,15 +824,33 @@ function renderSetupState() {
 
 function updateSupportChannels() {
   if (dom.supportEmail) {
-    dom.supportEmail.textContent = publicConfig.supportEmail
-      ? publicConfig.supportEmail
-      : "Add your support email in supabase-config.js.";
+    setContactLink(
+      dom.supportEmail,
+      publicConfig.supportEmail ? `mailto:${publicConfig.supportEmail}` : "",
+      publicConfig.supportEmail,
+      "Add your support email in supabase-config.js.",
+    );
   }
   if (dom.supportWhatsapp) {
-    dom.supportWhatsapp.textContent = publicConfig.supportWhatsapp
-      ? publicConfig.supportWhatsapp
-      : "Add your WhatsApp number in supabase-config.js.";
+    const whatsappDigits = publicConfig.supportWhatsapp.replace(/[^\d]/g, "");
+    setContactLink(
+      dom.supportWhatsapp,
+      whatsappDigits ? `https://wa.me/${whatsappDigits}` : "",
+      publicConfig.supportWhatsapp,
+      "Add your WhatsApp number in supabase-config.js.",
+    );
   }
+}
+
+function getOrderReceiptNumber(order) {
+  const receiptValue = order.order_receipts;
+
+  if (Array.isArray(receiptValue)) {
+    const receiptRow = receiptValue[0];
+    return receiptRow?.receipt_number || null;
+  }
+
+  return receiptValue?.receipt_number || null;
 }
 
 function getProfileSeed() {
@@ -869,17 +910,31 @@ function populateOrderFormFromProfile() {
 }
 
 function renderAccountHub() {
+  if (dom.accountShortcut) {
+    dom.accountShortcut.textContent = state.session ? "My account" : "Account";
+  }
+
   if (dom.authStat) {
     dom.authStat.textContent = state.session
-      ? getProfileSeed().full_name || state.session.user.email || "Signed in"
+      ? pageType === "home"
+        ? "Signed in"
+        : getProfileSeed().full_name || state.session.user.email || "Signed in"
       : "Guest mode";
   }
 
   if (dom.authStatusPill) {
-    dom.authStatusPill.textContent = state.session ? "Signed in" : "Guest";
+    dom.authStatusPill.textContent = state.session
+      ? pageType === "home"
+        ? "Account ready"
+        : "Signed in"
+      : "Guest";
     dom.authStatusPill.className = state.session
       ? "status-pill status-pill-success"
       : "status-pill";
+  }
+
+  if (dom.openAuth && pageType === "auth") {
+    dom.openAuth.textContent = state.session ? "Manage login" : "Sign in / Create account";
   }
 
   if (!dom.accountName || !dom.accountSummaryCopy || !dom.accountStatusPill) {
@@ -1182,7 +1237,7 @@ function buildRazorpayOptions(orderResponse, payload) {
         await loadOrderHistory();
         closeOrderDialog();
         setNotice(
-          `Payment confirmed for ${data.productTitle || payload.productTitle}. Order history has been updated.`,
+          `Payment confirmed for ${data.productTitle || payload.productTitle}. Receipt ${data.receiptNumber || "generated"} was recorded.`,
           "success",
         );
       } catch (error) {
@@ -1213,7 +1268,7 @@ async function loadOrderHistory() {
 
   const { data, error } = await supabaseClient
     .from("orders")
-    .select("*")
+    .select("*, order_receipts(receipt_number)")
     .order("created_at", { ascending: false })
     .limit(8);
 
@@ -1233,8 +1288,10 @@ async function loadOrderHistory() {
   }
 
   dom.orderHistoryList.innerHTML = data
-    .map(
-      (order) => `
+    .map((order) => {
+      const receiptNumber = getOrderReceiptNumber(order);
+
+      return `
         <article class="history-item">
           <div class="history-item-head">
             <div>
@@ -1248,6 +1305,7 @@ async function loadOrderHistory() {
           <div class="history-meta">
             <span>Total: ${inrFormatter.format(order.total_price_inr)}</span>
             <span>Delivery: ${humanDate(order.delivery_date)}</span>
+            <span>Receipt: ${receiptNumber || "Pending"}</span>
           </div>
           <div class="history-meta">
             <span>Saved: ${inrFormatter.format(order.discount_amount_inr || 0)}</span>
@@ -1255,8 +1313,8 @@ async function loadOrderHistory() {
             <span>Placed: ${humanDate(order.created_at?.slice(0, 10))}</span>
           </div>
         </article>
-      `,
-    )
+      `;
+    })
     .join("");
 }
 
