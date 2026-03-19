@@ -940,6 +940,19 @@ code {
   border-color: rgba(105, 212, 255, 0.42);
 }
 
+.field input.error,
+.field textarea.error {
+  border-color: var(--error);
+  background: rgba(255, 149, 133, 0.08);
+}
+
+.error-msg {
+  color: var(--error);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  min-height: 1.2rem;
+}
+
 .field input[readonly] {
   opacity: 0.78;
 }

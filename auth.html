@@ -35,11 +35,12 @@
             </div>
           </div>
 
-          <div class="topbar-actions">
+<div class="topbar-actions">
             <a class="ghost-link" href="./index.html">Home</a>
             <a class="ghost-link" href="./index.html#collection">Collection</a>
             <a class="ghost-link" href="./auth.html">Account</a>
             <a class="ghost-link" href="#support">Support</a>
+            <button id="theme-toggle" class="ghost-link" type="button" aria-label="Toggle theme">🌙</button>
           </div>
         </nav>
 
@@ -100,9 +101,10 @@
 
               <form class="stack-form hidden" id="profile-form">
                 <div class="field-grid">
-                  <label class="field">
+<label class="field">
                     <span>Full name</span>
                     <input id="profile-full-name" name="full_name" type="text" required />
+                    <div class="error-msg hidden"></div>
                   </label>
                   <label class="field">
                     <span>Phone</span>
@@ -318,14 +320,16 @@
               <span>Full name</span>
               <input id="auth-full-name" type="text" name="full_name" />
             </label>
-            <label class="field field-wide">
-              <span>Email</span>
-              <input id="auth-email" type="email" name="email" required />
-            </label>
-            <label class="field">
-              <span>Password</span>
-              <input id="auth-password" type="password" name="password" minlength="6" required />
-            </label>
+<label class="field field-wide">
+                    <span>Email</span>
+                    <input id="auth-email" type="email" name="email" required />
+                    <div class="error-msg hidden"></div>
+                  </label>
+<label class="field">
+                    <span>Password</span>
+                    <input id="auth-password" type="password" name="password" minlength="6" required />
+                    <div class="error-msg hidden"></div>
+                  </label>
             <label class="field auth-signup-only hidden">
               <span>Phone</span>
               <input id="auth-phone" type="tel" name="phone" inputmode="tel" />
