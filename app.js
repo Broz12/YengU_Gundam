@@ -770,6 +770,8 @@ function renderStats() {
 }
 
 function renderSetupState() {
+  if (pageType === "home") return;
+
   if (
     !dom.commerceHeadline ||
     !dom.commerceCopy ||
@@ -915,6 +917,10 @@ function populateOrderFormFromProfile() {
 function renderAccountHub() {
   if (dom.accountShortcut) {
     dom.accountShortcut.textContent = state.session ? "My account" : "Account";
+  }
+
+  if (pageType === "home") {
+    return;
   }
 
   if (dom.authStat) {

@@ -402,9 +402,9 @@ code {
 }
 
 .hero-copy h2 {
-  max-width: 12ch;
+  max-width: 10ch;
   margin-top: 0.85rem;
-  font-size: clamp(3rem, 8vw, 5.7rem);
+  font-size: clamp(2.6rem, 6.5vw, 4.9rem);
 }
 
 .hero-copy h2 span {
@@ -1026,7 +1026,6 @@ code {
 .catalog {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  align-items: start;
   gap: 1.2rem;
   margin-top: 1.5rem;
 }
@@ -1034,7 +1033,6 @@ code {
 .catalog-card {
   display: flex;
   flex-direction: column;
-  align-self: start;
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(244, 237, 223, 0.1);
@@ -1176,10 +1174,20 @@ code {
   gap: 1rem;
 }
 
+.card-header > div {
+  min-width: 0;
+  flex: 1;
+}
+
 .card-header h3 {
   margin: 0.35rem 0 0;
   font-size: 1.22rem;
   line-height: 1.12;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  min-height: 2.75rem;
 }
 
 .card-subtitle {
@@ -1190,6 +1198,7 @@ code {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
   overflow: hidden;
+  min-height: 4.6rem;
 }
 
 .code-pill {

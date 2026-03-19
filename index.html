@@ -6,15 +6,15 @@
     <meta name="theme-color" content="#071019" />
     <meta
       name="description"
-      content="Yengu Gundam storefront with secure account login, customizable orders, delivery scheduling, and India-ready checkout."
+      content="Yengu custom Gundam store with collector builds, clean product browsing, and ready-to-order display pieces."
     />
-    <meta property="og:title" content="Yengu | Secure Collector Checkout" />
+    <meta property="og:title" content="Yengu | Custom Gundam Store" />
     <meta
       property="og:description"
-      content="Browse custom Gundam builds, open clean detail popups, and order through a Supabase-backed secure checkout flow."
+      content="Browse custom Gundam builds and shop a clean, focused collector storefront."
     />
     <meta property="og:type" content="website" />
-    <title>Yengu | Secure Collector Checkout</title>
+    <title>Yengu | Custom Gundam Store</title>
     <link rel="icon" href="./favicon.svg?v=20260319" type="image/svg+xml" />
     <link rel="manifest" href="./site.webmanifest" />
     <link rel="stylesheet" href="./styles.css" />
@@ -30,7 +30,7 @@
               <img src="./assets/yengu-swoop.svg?v=20260319" alt="" class="brand-mark-image" />
             </span>
             <div>
-              <p class="eyebrow">Secure Collector Store</p>
+              <p class="eyebrow">Collector Store</p>
               <h1>Yengu</h1>
             </div>
           </div>
@@ -38,46 +38,23 @@
           <div class="topbar-actions">
             <a class="ghost-link" href="./index.html">Home</a>
             <a class="ghost-link" href="#collection">Collection</a>
-            <a class="ghost-link" href="./auth.html" id="account-shortcut">Account</a>
           </div>
         </nav>
 
         <div class="hero-grid">
           <section class="hero-copy reveal">
-            <div class="brand-ribbon">
-              <span>Image-first browse</span>
-              <span>Popup details</span>
-              <span>Smooth glide</span>
-            </div>
-            <p class="section-kicker">Collector Drop</p>
+            <p class="section-kicker">Custom Gundam Store</p>
             <h2>
-              Browse custom Gundam builds with
-              <span>clean cards and fast pop-up details.</span>
+              Custom builds
+              <span>ready for your shelf.</span>
             </h2>
             <p class="hero-text">
-              The home page stays focused on pictures, price, and motion.
-              Login, saved details, order history, and support live on a
-              separate account page.
+              Browse the collection, open full details only when you want them,
+              and order directly from a cleaner storefront.
             </p>
 
             <div class="hero-actions">
               <a class="primary-button" href="#collection">Browse figures</a>
-              <a class="secondary-button" href="./auth.html">Open account page</a>
-            </div>
-
-            <div class="hero-stats">
-              <article>
-                <strong id="stat-count">16</strong>
-                <span>display builds</span>
-              </article>
-              <article>
-                <strong>Pop-up</strong>
-                <span>full product details</span>
-              </article>
-              <article>
-                <strong id="auth-stat">Guest mode</strong>
-                <span>account page for login</span>
-              </article>
             </div>
           </section>
 
@@ -103,86 +80,15 @@
                 <span>1-of-1 display-ready builds</span>
               </div>
             </div>
-
-            <div class="signal-card">
-              <p class="panel-label">Browse mode</p>
-              <h3 id="commerce-headline">Clean picture-first collection</h3>
-              <p id="commerce-copy">
-                Cards stay short. Open a product to see details, pricing,
-                and order actions in one focused popup.
-              </p>
-              <div class="status-row">
-                <span class="status-pill" id="auth-status-pill">Guest</span>
-                <span class="status-pill status-pill-soft" id="setup-status-pill">
-                  Home page
-                </span>
-              </div>
-            </div>
-
-            <div class="floating-cards">
-              <article class="mini-card">
-                <span class="mini-tag">Quick view</span>
-                <strong>Tap image, get details</strong>
-                <p>Big visuals first, all deeper copy inside the popup.</p>
-              </article>
-              <article class="mini-card">
-                <span class="mini-tag">Less clutter</span>
-                <strong>No form wall on home</strong>
-                <p>Account, history, and support move to their own page.</p>
-              </article>
-              <article class="mini-card">
-                <span class="mini-tag">Smooth flow</span>
-                <strong>Glide, snap, browse</strong>
-                <p>Horizontal spotlight rail and lighter cards make scanning faster.</p>
-              </article>
-            </div>
           </aside>
         </div>
       </header>
 
       <main>
-        <section class="setup-banner reveal hidden" id="setup-banner">
-          <div>
-            <p class="section-kicker">Commerce setup</p>
-            <h2 id="setup-banner-headline">Connect payments and auth when you are ready to go live.</h2>
-          </div>
-          <p id="setup-banner-copy">
-            Add your public Supabase URL, publishable key, and Razorpay key id inside
-            <code>supabase-config.js</code>. Keep order data in Supabase and
-            keep payment secrets only in Edge Function environment variables.
-          </p>
-        </section>
-
-        <section class="account-bridge reveal">
-          <div class="card-shell account-bridge-shell">
-            <div>
-              <p class="section-kicker">Account page</p>
-              <h2>Keep home clean. Manage login, profile, history, and support on a separate page.</h2>
-            </div>
-            <div class="account-bridge-panel">
-              <a class="primary-button" href="./auth.html">Open account page</a>
-              <p class="helper">
-                Sign in, save shipping details, track orders, and send support requests without crowding the home page.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section class="spotlight-section reveal" id="spotlight">
-          <div class="section-head">
-            <div>
-              <p class="section-kicker">Spotlight Rail</p>
-              <h2>Slide through the drop fast.</h2>
-            </div>
-            <p class="helper">Scroll sideways for image-led highlights and quick pop-up access.</p>
-          </div>
-          <div class="spotlight-track" id="spotlight-track" aria-live="polite"></div>
-        </section>
-
         <section class="controls reveal" id="collection">
           <div class="controls-copy">
             <p class="section-kicker">Collection</p>
-            <h2>Tap a card, open the popup, and order only when you want more.</h2>
+            <h2>Shop the collection.</h2>
           </div>
 
           <div class="toolbar">
@@ -209,12 +115,10 @@
           </span>
           <div>
             <p class="section-kicker">Yengu Storefront</p>
-            <strong>Collector-first browsing with a cleaner account flow.</strong>
+            <strong>Custom Gundam builds for collectors.</strong>
           </div>
         </div>
-        <p>
-          Browse on home. Manage account and support on a separate page. Open details only when you want them.
-        </p>
+        <p>Collector builds, clean browsing, simple ordering.</p>
       </footer>
     </div>
 
