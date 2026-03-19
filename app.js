@@ -541,9 +541,12 @@ function setNotice(message, tone = "info") {
   }, 5200);
 }
 
-function setButtonBusy(button, busy, busyLabel) {
+function setButtonBusy(button, busy, busyLabel, idleLabel) {
   if (!button) return;
   if (!button.dataset.originalLabel) button.dataset.originalLabel = button.textContent;
+  if (!busy && typeof idleLabel === "string" && idleLabel.trim()) {
+    button.dataset.originalLabel = idleLabel;
+  }
   button.disabled = busy;
   button.textContent = busy ? busyLabel : button.dataset.originalLabel;
 }
@@ -1243,7 +1246,12 @@ function buildRazorpayOptions(orderResponse, payload) {
       } catch (error) {
         setNotice(normaliseError(error), "error");
       } finally {
-        setButtonBusy(dom.checkoutButton, false, "Proceed to secure checkout");
+        setButtonBusy(
+          dom.checkoutButton,
+          false,
+          "Proceed to secure checkout",
+          "Proceed to secure checkout",
+        );
       }
     },
     modal: {
@@ -1266,11 +1274,19 @@ async function loadOrderHistory() {
     return;
   }
 
-  const { data, error } = await supabaseClient
+  let { data, error } = await supabaseClient
     .from("orders")
     .select("*, order_receipts(receipt_number)")
     .order("created_at", { ascending: false })
     .limit(8);
+
+  if (error && error.message?.includes("order_receipts")) {
+    ({ data, error } = await supabaseClient
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(8));
+  }
 
   if (error) {
     setNotice(normaliseError(error), "warn");
@@ -1369,7 +1385,7 @@ async function handleProfileSubmit(event) {
   } catch (error) {
     setNotice(normaliseError(error), "error");
   } finally {
-    setButtonBusy(dom.saveProfileButton, false, "Save account details");
+    setButtonBusy(dom.saveProfileButton, false, "Save account details", "Save account details");
   }
 }
 
@@ -1425,7 +1441,12 @@ async function handleAuthSubmit(event) {
   } catch (error) {
     setNotice(normaliseError(error), "error");
   } finally {
-    setButtonBusy(dom.authSubmit, false, state.authMode === "signup" ? "Create account" : "Sign in");
+    setButtonBusy(
+      dom.authSubmit,
+      false,
+      state.authMode === "signup" ? "Creating..." : "Signing in...",
+      state.authMode === "signup" ? "Create account" : "Sign in",
+    );
   }
 }
 
@@ -1480,7 +1501,12 @@ async function handleOrderSubmit(event) {
   } catch (error) {
     setNotice(normaliseError(error), "error");
   } finally {
-    setButtonBusy(dom.checkoutButton, false, "Proceed to secure checkout");
+    setButtonBusy(
+      dom.checkoutButton,
+      false,
+      "Proceed to secure checkout",
+      "Proceed to secure checkout",
+    );
   }
 }
 
