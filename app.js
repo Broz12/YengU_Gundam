@@ -638,6 +638,20 @@ function setupValidation(formId) {
   });
 }
 
+function resetFormValidation(formId) {
+  const form = document.getElementById(formId);
+  if (!form) return;
+
+  form.querySelectorAll("input, textarea, select").forEach((field) => {
+    field.classList.remove("error");
+    const errorNode = getFieldErrorContainer(field);
+    if (errorNode) {
+      errorNode.textContent = "";
+      errorNode.classList.add("hidden");
+    }
+  });
+}
+
 if (themeMediaQuery && typeof themeMediaQuery.addEventListener === "function") {
   themeMediaQuery.addEventListener("change", (event) => {
     let hasSavedTheme = false;
@@ -790,7 +804,7 @@ function setNotice(message, tone = "info") {
   window.clearTimeout(setNotice.timeoutId);
   setNotice.timeoutId = window.setTimeout(() => {
     dom.appNotice.className = "app-notice hidden";
-  }, 5200);
+  }, 7600);
 }
 
 function setButtonBusy(button, busy, busyLabel, idleLabel) {
@@ -1466,10 +1480,17 @@ function setAuthMode(mode) {
   dom.authSubmit.textContent = mode === "signup" ? "Create account" : "Sign in";
   dom.authHelper.textContent =
     mode === "signup"
-      ? "Create a secure account with shipping details so checkout is faster."
+      ? "Create your account. We will send a verification email before sign in works."
       : "Use your account to unlock checkout and order history.";
 
   validateForm("auth-form");
+}
+
+function resetAuthForm() {
+  if (!dom.authForm) return;
+  dom.authForm.reset();
+  setAuthMode("signin");
+  resetFormValidation("auth-form");
 }
 
 function openAuthDialog() {
@@ -1857,6 +1878,7 @@ async function handleAuthSubmit(event) {
     if (state.authMode === "signin") {
       const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      resetAuthForm();
       closeAuthDialog();
       setNotice("Signed in successfully.", "success");
       return;
@@ -1884,12 +1906,16 @@ async function handleAuthSubmit(event) {
     if (error) throw error;
 
     if (data.session) {
+      resetAuthForm();
       closeAuthDialog();
       setNotice("Account created and signed in.", "success");
       return;
     }
 
-    setNotice("Account created. Check your email for the confirmation link, then sign in.", "success");
+    resetAuthForm();
+    closeAuthDialog();
+    renderAccountHub();
+    setNotice(`Account created. Check ${email} for the verification link, then sign in.`, "success");
   } catch (error) {
     setNotice(normaliseError(error), "error");
   } finally {
